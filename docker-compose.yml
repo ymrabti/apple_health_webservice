@@ -1,0 +1,123 @@
+# docker compose -f "docker-compose.yml" up -d --build
+# docker compose -f "docker-compose.yml" down && docker rmi -f health_image_webservice:1.0.0 health_image_backoffice:1.0.0 health_image_mobile_app:1.0.0
+# start docker-desktop://dashboard/build/desktop-linux/desktop-linux/t91lkq0fas563p72pouhbrwsq
+# start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+name: Health-Checks-Ecosystem
+services:
+    health_mysql:
+        image: mysql:8.4.5
+        container_name: health_mysql
+        ports:
+            - "4408:3306"
+        volumes:
+            - mysqldbdata:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: HealthyPasswo2025rd!
+            MYSQL_DATABASE: health_db
+            MYSQL_USER: Healthy2025
+            MYSQL_PASSWORD: HealthyPasswo2025rd!
+        networks:
+            - health-network
+        restart: unless-stopped
+
+    health_phpmyadmin:
+        image: phpmyadmin/phpmyadmin:5.2
+        container_name: health_phpmyadmin
+        restart: 'unless-stopped'
+        ports:
+            - "8081:80"
+        environment:
+            PMA_HOST: health_mysql
+            PMA_USER: Healthy2025
+            PMA_PASSWORD: HealthyPasswo2025rd!
+            UPLOAD_LIMIT: 300M
+        depends_on:
+            - health_mysql
+        networks:
+            - health-network
+        volumes:
+            - phpmyadmin-data:/var/www/html
+
+    health_node-app:
+        depends_on:
+            - health_mysql
+
+        build:
+            context: ./
+            dockerfile: Dockerfile
+
+        env_file:
+            - ./config/.env
+
+        environment:
+            DB_HOST: health_mysql
+            DB_DATABASE: health_db
+            DB_USER: Healthy2025
+            DB_PORT: 3306
+            DB_PASSWORD: HealthyPasswo2025rd!
+
+            DEPLOY_ENV: Docker
+            NODE_ENV: production
+
+        # ports:
+        # - "7384:7384"
+        image: health_image_webservice:1.0.0
+        container_name: health_webservice
+        restart: always
+        volumes:
+            - image-storage:/usr/src/health_pointage
+        networks:
+            - health-network
+
+    cloudflared:
+        image: cloudflare/cloudflared:2025.6.1
+        env_file:
+            - ./config/.env
+        command: tunnel --no-autoupdate run --token eyJhIjoiODUwYmVhYzdiNWQ4YzQwYTYxYzkxYTc5NWJkMzVkMmEiLCJ0IjoiODM4NjMxZmUtZTdmNC00MTZjLTg2OGItYmNhZDgzMTlkMTQ0IiwicyI6Ik5HUTROVEJsTmpjdFltSmhaaTAwT0dFMUxXSTNPVEl0Tm1aa01qRTFZelE0WW1abSJ9
+        # command: tunnel --no-autoupdate run --token eyJhIjoiODUwYmVhYzdiNWQ4YzQwYTYxYzkxYTc5NWJkMzVkMmEiLCJ0IjoiY2Y2NmFmNjEtZjRlZi00MTE0LTkzM2MtZmYxYmZmNzkyNmJiIiwicyI6Ik9XSTNNMkl4TTJFdE5UaGxNUzAwTWpNMExUaG1OR1l0TmpsbU0yRXlNREpsTmpZNSJ9
+        restart: unless-stopped
+        depends_on:
+            - health_mysql
+            - health_node-app
+            - health_phpmyadmin
+            - health_backoffice
+            - health_flutter-web
+        networks:
+            - health-network
+        volumes:
+            - ~/.cloudflared:/etc/cloudflared
+        container_name: health_cloudflared
+
+    health_flutter-web:
+        build:
+            context: ../Mobile-App
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        # ports:
+        #     - '4737:80'
+        networks:
+            - health-network
+        image: health_image_mobile_app:1.0.0
+        container_name: health_mobile_app
+
+    health_backoffice:
+        build:
+            context: ../Backoffice
+            dockerfile: Dockerfile
+        image: health_image_backoffice:1.0.0
+        container_name: health_backoffice
+        networks:
+            - health-network
+        restart: unless-stopped
+        # ports:
+        #   - "7784:80"
+
+volumes:
+    configdb:
+    mysqldbdata:
+    image-storage:
+    phpmyadmin-data:
+
+networks:
+    health-network:
+        driver: bridge
