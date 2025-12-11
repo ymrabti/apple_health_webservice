@@ -69,7 +69,7 @@ async function registerMiddleware(req, res, next, validator) {
         }
 
         const tmpPath = join(uploadDirectory, fileName);
-        const newPath = resolve(uploadService.pathUploads, req.body.username, fileName);
+        const newPath = resolve(uploadService.pathUploads, req.body.userName, fileName);
         makeIfNorExists(newPath)
         rename(
             tmpPath,

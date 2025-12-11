@@ -20,7 +20,7 @@ function makeIfNorExists(destination) {
 const pathUploads = resolve(config.DEPLOY_ENV == 'Docker' ? '/usr/src/health' : 'static');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const destination = resolve(pathUploads, req.params.username)
+        const destination = resolve(pathUploads, req.params.userName)
         makeIfNorExists(resolve(destination, file.originalname));
         cb(null, destination);
 

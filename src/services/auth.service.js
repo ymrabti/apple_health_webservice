@@ -8,13 +8,13 @@ const { tokenTypes } = require("../config/tokens");
 const { usersModel, tokenModel } = require("../models/database");
 
 /**
- * Login with username and password
+ * Login with userName and password
  * @param {string} email
  * @param {string} password
  * @returns {Promise<usersModel>}
  */
-const loginUserWithEmailAndPassword = async (email, username, password) => {
-    const user = await userService.getUserByUsernameOrEmail(username, email);
+const loginUserWithEmailAndPassword = async (email, userName, password) => {
+    const user = await userService.getUserByUsernameOrEmail(userName, email);
     if (!user || !(await user.isPasswordMatch(password))) {
         throw new ApiError(
             httpStatus.UNAUTHORIZED,
@@ -39,7 +39,6 @@ const logout = async (refreshToken) => {
     });
     if (refreshTokenDoc) {
         await refreshTokenDoc.remove();
-        // throw new ApiError(httpStatus.NOT_FOUND, 'Not found');
     }
 };
 

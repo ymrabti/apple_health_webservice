@@ -1,8 +1,8 @@
 const { Sequelize } = require("sequelize");
 const config = require("../config/config");
-const health = require("./users");
-const tokens = require("./tokens");
-const checks = require("./checks");
+const { users: husers } = require("./users");
+const { tokens } = require("./tokens");
+const { health: checks } = require("./checks");
 
 const { DB_HOST, DB_DATABASE, DB_USER, DB_PORT, DB_PASSWORD } = config.mysql;
 
@@ -34,29 +34,23 @@ db.authenticate()
         console.log(err);
     });
 
-const usersModel = health(db);
+const usersModel = husers(db);
 const tokenModel = tokens(db);
 const checkModel = checks(db);
 
-usersModel.hasMany(tokenModel, { foreignKey: "user_id", as: "tokens" });
-tokenModel.belongsTo(usersModel, { foreignKey: "user_id", as: "user" });
+usersModel.hasMany(tokenModel, { foreignKey: "userId", as: "tokens" });
+tokenModel.belongsTo(usersModel, { foreignKey: "id", as: "user" });
 
 usersModel.hasMany(checkModel, {
-    foreignKey: "user_qr_id",
-    as: "qrChecks",
+    foreignKey: "userId",
+    as: "checks",
 });
-usersModel.hasMany(checkModel, {
-    foreignKey: "user_scan_id",
-    as: "scanChecks",
-});
+
 checkModel.belongsTo(usersModel, {
-    foreignKey: "user_qr_id",
-    as: "userQr",
+    foreignKey: "id",
+    as: "user",
 });
-checkModel.belongsTo(usersModel, {
-    foreignKey: "user_scan_id",
-    as: "userScan",
-});
+
 
 module.exports = {
     usersModel,

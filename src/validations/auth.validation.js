@@ -4,9 +4,11 @@ const { password, email } = require("./custom.validation");
 const register = {
     body: Joi.object().keys({
         photo: Joi.string().required(),
-        username: Joi.string().required(),
+        userName: Joi.string().required(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
+        dateOfBirth: Joi.date().required(),
+        gender: Joi.string().required().valid('male', 'female'),
         email: Joi.string().required().custom(email),
         role: Joi.string().allow("", null),
         password: Joi.string().required().custom(password),
@@ -23,10 +25,10 @@ const login = {
     body: Joi.object()
         .keys({
             email: Joi.string().email().optional(),
-            username: Joi.string().optional(),
+            userName: Joi.string().optional(),
             password: Joi.string().required(),
         })
-        .xor("email", "username"), // Ensures exactly one of 'email' or 'username' is provided
+        .xor("email", "userName"), // Ensures exactly one of 'email' or 'userName' is provided
 };
 
 const logout = {

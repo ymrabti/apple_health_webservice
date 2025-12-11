@@ -1,111 +1,83 @@
 const { DataTypes, Sequelize } = require("sequelize");
 
+const tablenameHealth = "checks";
 /**
  *
  * @param {Sequelize} sequelize sequelize
  * @returns
  */
-module.exports = (sequelize) => {
-    const attributes = {
-        id: {
-            type: DataTypes.CHAR(36),
-            allowNull: false,
-            defaultValue: DataTypes.UUIDV4,
-            primaryKey: true,
-            autoIncrement: false,
-            comment: null,
-            field: "id",
+const schemaHealth = (sequelize) => ({
+    id: {
+        type: DataTypes.CHAR(36),
+        allowNull: false,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+    },
+    steps: {
+        type: DataTypes.INTEGER({ unsigned: true, decimals: 0 }),
+        allowNull: false,
+    },
+    calories: {
+        type: DataTypes.INTEGER({ unsigned: true, decimals: 0 }),
+        allowNull: false,
+    },
+    flights: {
+        type: DataTypes.INTEGER({ unsigned: true, decimals: 0 }),
+        allowNull: false,
+    },
+    exerciseMinutes: {
+        type: DataTypes.INTEGER({ unsigned: true, decimals: 0 }),
+        allowNull: false,
+    },
+    distanceKm: {
+        type: DataTypes.DOUBLE({ decimals: 2 }),
+        allowNull: false,
+    },
+    userId: {
+        type: DataTypes.CHAR(36),
+        allowNull: false,
+        references: {
+            key: "id",
+            model: "users",
         },
-        qrId: {
-            type: DataTypes.STRING(255),
-            allowNull: false,
-            defaultValue: null,
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "qr_id",
-            unique: "qr_id",
-        },
-        userQrId: {
-            type: DataTypes.CHAR(36),
-            allowNull: false,
-            defaultValue: null,
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "user_qr_id",
-            references: {
-                key: "id",
-                model: "usersModel",
-            },
-        },
-        userScanId: {
-            type: DataTypes.CHAR(36),
-            allowNull: false,
-            defaultValue: null,
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "user_scan_id",
-            references: {
-                key: "id",
-                model: "usersModel",
-            },
-        },
-        checkType: {
-            type: DataTypes.ENUM("in", "out"),
-            allowNull: false,
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "checkType",
-        },
-        scanTime: {
-            type: DataTypes.DATE,
-            allowNull: true,
-            defaultValue: sequelize.fn("current_timestamp"),
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "scan_time",
-        },
-        createdAt: {
-            type: DataTypes.DATE,
-            allowNull: true,
-            defaultValue: sequelize.fn("current_timestamp"),
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "created_at",
-        },
-        updatedAt: {
-            type: DataTypes.DATE,
-            allowNull: true,
-            defaultValue: sequelize.fn("current_timestamp"),
-            primaryKey: false,
-            autoIncrement: false,
-            comment: null,
-            field: "updated_at",
-        },
-    };
-    const options = {
-        tableName: "checks",
-        comment: "",
-        indexes: [
-            {
-                name: "user_qr_id",
-                unique: false,
-                type: "BTREE",
-                fields: ["user_qr_id"],
-            },
-            {
-                name: "user_scan_id",
-                unique: false,
-                type: "BTREE",
-                fields: ["user_scan_id"],
-            },
-        ],
-    };
-    const ChecksModel = sequelize.define("checksModel", attributes, options);
-    return ChecksModel;
+    },
+    dateRecord: {
+        type: DataTypes.DATEONLY,
+        defaultValue: sequelize.fn("current_timestamp"),
+    },
+    createdAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "createdAt field",
+    },
+    updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "updatedAt field",
+    },
+});
+
+module.exports = {
+    tablenameHealth,
+    schemaHealth,
+    /**
+     *
+     * @param {Sequelize} sequelize sequelize
+     * @returns
+     */
+    health(sequelize) {
+        const HealthModel = sequelize.define(tablenameHealth, schemaHealth, {
+            tableName: tablenameHealth,
+            timestamps: true,
+            indexes: [
+                {
+                    name: "user_id_index",
+                    unique: false,
+                    type: "BTREE",
+                    fields: ["id"],
+                },
+            ],
+        });
+        return HealthModel;
+    },
 };

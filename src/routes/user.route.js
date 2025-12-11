@@ -25,7 +25,7 @@ router
     .get(validate(userValidation.getUser), userController.checkUser)
 
 router
-    .route('/photo/:username')
+    .route('/photo/:userName')
     .post(auth(), uploadService.upload.single('photo'), userController.updateProfilePicture)
     .get(auth(), validate(userValidation.getUserPhoto), userController.getUserPhoto)
 

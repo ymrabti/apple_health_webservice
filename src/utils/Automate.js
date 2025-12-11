@@ -4,7 +4,7 @@ const automate = new Automate(
     {
         host: "127.0.0.1",
         database: "employee_checks",
-        username: "root",
+        userName: "root",
         password: "",
         dialect: "mysql",
         port: 3306,

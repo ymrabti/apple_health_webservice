@@ -11,11 +11,11 @@ const servicesFilePath =
         ? resolve(__dirname, "google-services.json")
         : resolve("google-services.json");
 
-const serviceAccount = JSON.parse(fs.readFileSync(servicesFilePath, "utf-8"));
+/* const serviceAccount = JSON.parse(fs.readFileSync(servicesFilePath, "utf-8"));
 
 const app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-});
+}); */
 
 /**
  *

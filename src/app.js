@@ -116,8 +116,6 @@ if (config.env === "production") {
     app.use("/Auth", authLimiter);
 }
 
-// api routes
-const ScanRoute = ecoRouter(socket, chatObject);
 
 const topStatic = resolve("static");
 app.get("/", (req, res) => {
@@ -128,9 +126,9 @@ app.use("/api-docs", swaggerUi.serve, async (req, res) => {
     return res.send(swaggerUi.generateHTML(generateSwaggerSpec()));
 });
 
+// api routes
 app.use("/cdn", express.static(topStatic));
 app.use("/api", /* firebaseAppcheck, */ routes);
-app.use("/api/ScanNow", /* firebaseAppcheck, */ ScanRoute);
 // send back a 404 error for any unknown api request
 /**
  *

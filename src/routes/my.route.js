@@ -15,4 +15,12 @@ router
         myController.updateUserFCM
     );
 
+router
+    .route("/NewDaily")
+    .put(
+        auth(),
+        validate(acctValidation.updateFCM_Token),
+        myController.updateUserFCM
+    );
+
 module.exports = router;

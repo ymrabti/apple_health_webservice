@@ -6,7 +6,7 @@ const createUser = {
     body: Joi.object().keys({
         photo: Joi.string().required(),
         role: Joi.string().required(),
-        username: Joi.string().required(),
+        userName: Joi.string().required(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
         email: Joi.string().required().custom(email),
@@ -26,7 +26,7 @@ const getUsers = {
 
 const getUserPhoto = {
     params: Joi.object().keys({
-        username: Joi.string().required(objectId),
+        userName: Joi.string().required(objectId),
     }),
     query: Joi.object().keys({
         t: Joi.any().optional(),
@@ -47,7 +47,7 @@ const updateUser = {
         .keys({
             firstName: Joi.string().required(),
             lastName: Joi.string().required(),
-            username: Joi.string().required(),
+            userName: Joi.string().required(),
             email: Joi.string().email().allow(null),
             gender: Joi.string().allow(null).valid('male', 'female'),
             role: Joi.string().required().valid(...roles),

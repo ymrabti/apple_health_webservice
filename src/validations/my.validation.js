@@ -19,11 +19,24 @@ const updateUser = {
         .keys({
             firstName: Joi.string().required(),
             lastName: Joi.string().required(),
-            username: Joi.string().required(),
+            userName: Joi.string().required(),
             email: Joi.string().custom(email).allow(null),
             gender: Joi.string().allow(null).valid('male', 'female'),
             role: Joi.string().required().valid(...roles),
             dateOfBirth: Joi.date().allow(null).iso(),
+        })
+        .min(1),
+};
+
+const newDailyStats = {
+    body: Joi.object()
+        .keys({
+            steps: Joi.number().required(),
+            calories: Joi.number().required(),
+            flights: Joi.number().required(),
+            exerciseMinutes: Joi.number().required(),
+            distanceKm: Joi.number().required(),
+            userId: Joi.string().required(),
         })
         .min(1),
 };
@@ -36,4 +49,5 @@ module.exports = {
     getUserPhoto,
     updateUser,
     deleteUser,
+    newDailyStats,
 };

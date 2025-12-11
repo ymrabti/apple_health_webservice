@@ -21,7 +21,7 @@ const createUser = async (req, res) => {
     res.status(httpStatus.CREATED).send(user);
 };
 
-function generateDefaultPassword({ username, firstName, lastName, email }) {
+function generateDefaultPassword({ userName, firstName, lastName, email }) {
     const cap = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     const getEmailDomain = (email) => {
         const domain = email.split('@')[1];
@@ -30,7 +30,7 @@ function generateDefaultPassword({ username, firstName, lastName, email }) {
 
     const part1 = cap(firstName).slice(0, 2);          // e.g., "Jo"
     const part2 = lastName.slice(-2).toLowerCase();    // e.g., "ez"
-    const part3 = username.slice(0, 3);                // e.g., "jdo"
+    const part3 = userName.slice(0, 3);                // e.g., "jdo"
     const part4 = `${getEmailDomain(email)}`.toUpperCase();              // e.g., "gmail"
     const now = new Date();
     const random = `${now.getDate()}@${now.getMonth()}`; // 2-digit number
@@ -57,7 +57,7 @@ const getUsers = async (req, res) => {
  * @param {express.Response} res Response
  */
 async function checkUser(req, res) {
-    const user = await userService.getUserByUsernameOrEmail(req.query.username, req.query.email);
+    const user = await userService.getUserByUsernameOrEmail(req.query.userName, req.query.email);
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
@@ -70,11 +70,11 @@ async function checkUser(req, res) {
  * @param {express.Response} res Response
  */
 async function getUserPhoto(req, res) {
-    const user = await userService.getUserByUsernameOrEmail(req.params.username);
+    const user = await userService.getUserByUsernameOrEmail(req.params.userName);
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
-    const profilePicture = resolve(uploadService.pathUploads, user.username, user.photo)
+    const profilePicture = resolve(uploadService.pathUploads, user.userName, user.photo)
     const filename = user.photo;
     const fileSize = fs.statSync(profilePicture).size;
     res.setHeader("content-disposition", `inline; filename="${filename}"; size=${fileSize}`);
@@ -88,8 +88,8 @@ async function getUserPhoto(req, res) {
  * @param {express.Response} res Response
  */
 async function updateProfilePicture(req, res) {
-    const username = req.params.username;
-    const user = await userService.getUserByUsernameOrEmail(username);
+    const userName = req.params.userName;
+    const user = await userService.getUserByUsernameOrEmail(userName);
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
@@ -138,7 +138,7 @@ const poke = async (req, res) => {
  * @param {express.Response} res response
  */
 const getUser = async (req, res) => {
-    const user = await userService.getUserByUsernameOrEmail(req.query.username, req.query.email);
+    const user = await userService.getUserByUsernameOrEmail(req.query.userName, req.query.email);
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }

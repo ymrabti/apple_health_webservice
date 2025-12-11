@@ -32,10 +32,10 @@ const register = async (req, res) => {
  * @param {express.Response} res response
  */
 const login = async (req, res) => {
-    const { email, username, password } = req.body;
+    const { email, userName, password } = req.body;
     const user = await authService.loginUserWithEmailAndPassword(
         email,
-        username,
+        userName,
         password
     );
     const tokens = await tokenService.generateAuthTokens(user);
@@ -74,7 +74,7 @@ const refreshTokens = async (req, res) => {
  * @param {express.Response} res response
  */
 const sendOTP = async (req, res) => {
-    var user = await userService.getUserByUsernameOrEmail(req.body.username);
+    var user = await userService.getUserByUsernameOrEmail(req.body.userName);
     const resetPasswordToken = await tokenService.generateResetPasswordToken(
         user.email
     );

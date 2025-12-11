@@ -2,22 +2,25 @@
 const app = require("./app");
 const config = require("./config/config");
 const logger = require("./config/logger");
-const db = require("./models/database");
 let server;
 
 server = app.httpServer.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);
 });
 
-/* (async () => {
+/* 
+const db = require("./models/database");
+(async () => {
     try {
         const user = await db.usersModel.create({
             // id: v4(),
             email: "john2@example.com",
             password: "Test1234",
-            username: "johnny12",
+            userName: "johnny12",
             firstName: "John",
             lastName: "Doe",
+            gender: 'male',
+            dateOfBirth: new Date('2000'),
             photo: "avatar.png",
         });
 

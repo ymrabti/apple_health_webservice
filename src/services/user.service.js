@@ -51,10 +51,10 @@ const getUserById = async (id) => {
  * @param {ObjectId} id
  * @returns {Promise<Model>}
  */
-const getUserByUsernameOrEmail = async (username, email) => {
+const getUserByUsernameOrEmail = async (userName, email) => {
     const usr =
-        username != null
-            ? await usersModel.findOne({ where: { username: username } })
+        userName != null
+            ? await usersModel.findOne({ where: { userName: userName } })
             : await usersModel.findOne({ where: { email: email } });
     return usr;
 };
@@ -133,12 +133,12 @@ const countChecks = async (userId, gateId) => {
         {
             model: usersModel,
             as: "userQr",
-            // attributes: ["id", "role", "firstName", "lastName", "username"],
+            // attributes: ["id", "role", "firstName", "lastName", "userName"],
         },
         {
             model: usersModel,
             as: "userScan",
-            // attributes: ["id", "role", "firstName", "lastName", "username"],
+            // attributes: ["id", "role", "firstName", "lastName", "userName"],
         },
     ];
 
@@ -173,12 +173,12 @@ const myTodayChecks = async (userId, isGate) => {
         {
             model: usersModel,
             as: "userQr",
-            attributes: ["id", "role", "firstName", "lastName", "username"],
+            attributes: ["id", "role", "firstName", "lastName", "userName"],
         },
         {
             model: usersModel,
             as: "userScan",
-            attributes: ["id", "role", "firstName", "lastName", "username"],
+            attributes: ["id", "role", "firstName", "lastName", "userName"],
         },
     ];
 
