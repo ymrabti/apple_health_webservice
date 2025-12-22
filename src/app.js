@@ -22,7 +22,6 @@ const {
 } = require("./config/passport");
 const { authLimiter } = require("./middlewares/rateLimiter");
 const { firebaseAppcheck } = require("./middlewares/app_check");
-const ecoRouter = require("./routes/check.route");
 const routes = require("./routes");
 const { errorConverter, errorHandler } = require("./middlewares/error");
 const ApiError = require("./utils/ApiError");
@@ -85,7 +84,7 @@ const generateSwaggerSpec = () => {
 const socketServer = new Server(httpServer, {
     cors: corsOptions,
 });
-const socket = socketServer.of("/employee_qr/");
+const socket = socketServer.of("/apple_health/");
 const chatObject = new MySocketIO(socket);
 
 // ! // // // // // //  SOCKET // // // // // // //
