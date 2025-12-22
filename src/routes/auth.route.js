@@ -49,6 +49,14 @@ router.post(
     authController.verifyEmail
 );
 
+// OAuth callback to authenticate Python client and return a JWT via redirect
+// Example: GET /api/Auth/OAuth/callback/authenticate?redirect=http://127.0.0.1:8765/callback
+router.get(
+    "/OAuth/callback/authenticate",
+    auth(),
+    authController.oauthCallbackAuthenticate
+);
+
 module.exports = router;
 
 /**

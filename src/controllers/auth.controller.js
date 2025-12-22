@@ -1,6 +1,7 @@
 const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const express = require("express");
+const moment = require("moment");
 const { authService, userService, tokenService } = require("../services");
 const logger = require("../config/logger");
 const config = require("../config/config");
@@ -154,4 +155,32 @@ module.exports = {
     changePassword: catchAsync(changePassword),
     sendVerificationEmail: catchAsync(sendVerificationEmail),
     verifyEmail: catchAsync(verifyEmail),
+    oauthCallbackAuthenticate: catchAsync(async (req, res) => {
+        const redirect = req.query.redirect;
+        if (!redirect) {
+            return res
+                .status(httpStatus.BAD_REQUEST)
+                .json({ message: "Missing 'redirect' query parameter" });
+        }
+
+        if (!req.user) {
+            return res
+                .status(httpStatus.UNAUTHORIZED)
+                .json({ message: "Please authenticate" });
+        }
+
+        const expires = moment().add(
+            config.jwt.accessExpirationMinutes,
+            "minutes"
+        );
+        const accessToken = tokenService.generateToken(
+            req.user.id,
+            expires,
+            tokenTypes.ACCESS
+        );
+
+        const url = new URL(redirect);
+        url.searchParams.set("token", accessToken);
+        return res.redirect(url.toString());
+    }),
 };
