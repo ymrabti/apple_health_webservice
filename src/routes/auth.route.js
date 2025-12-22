@@ -8,12 +8,12 @@ const createMiddleware = require("../middlewares/register.middleware");
 const router = express.Router();
 
 router.post(
-    "/Register",
+    "/register",
     createMiddleware(authValidation.register),
     authController.register
 );
-router.post("/Login", validate(authValidation.login), authController.login);
-router.post("/Logout", validate(authValidation.logout), authController.logout);
+router.post("/login", validate(authValidation.login), authController.login);
+router.post("/logout", validate(authValidation.logout), authController.logout);
 router.post(
     "/refresh-tokens",
     validate(authValidation.refreshTokens),

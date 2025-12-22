@@ -15,6 +15,7 @@ const envVarsSchema = Joi.object()
         DB_PORT: Joi.number().default(3306).description("MySQL DB port"),
         DB_USER: Joi.string().required().description("MySQL DB user"),
         DB_PASSWORD: Joi.string().allow("").description("MySQL DB password"),
+        DB_DATABASE: Joi.string().required().description("MySQL DB name"),
         JWT_SECRET: Joi.string().required().description("JWT secret key"),
         JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
             .default(30)
@@ -56,6 +57,7 @@ module.exports = {
         DB_PORT: envVars.DB_PORT,
         DB_USER: envVars.DB_USER,
         DB_PASSWORD: envVars.DB_PASSWORD,
+        DB_DATABASE: envVars.DB_DATABASE,
     },
     cookie: {
         access_token_name: "auth_cookie_access_token",
