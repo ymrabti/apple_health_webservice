@@ -9,15 +9,15 @@ const router = express.Router();
 
 const defaultRoutes = [
     {
-        path: '/MyAccount',
+        path: '/myaccount',
         route: myRoute,
     },
     {
-        path: '/Auth',
+        path: '/auth',
         route: authRoute,
     },
     {
-        path: '/Health',
+        path: '/health',
         route: userRoute,
     },
 ];
