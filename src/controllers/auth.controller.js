@@ -156,17 +156,11 @@ module.exports = {
     sendVerificationEmail: catchAsync(sendVerificationEmail),
     verifyEmail: catchAsync(verifyEmail),
     oauthCallbackAuthenticate: catchAsync(async (req, res) => {
-        const redirect = req.query.redirect;
-        if (!redirect) {
-            return res
-                .status(httpStatus.BAD_REQUEST)
-                .json({ message: "Missing 'redirect' query parameter" });
-        }
 
         if (!req.user) {
             return res
                 .status(httpStatus.UNAUTHORIZED)
-                .json({ message: "Please authenticate" });
+                .json({ message: "Please authenticate first!" });
         }
 
         const expires = moment().add(
@@ -179,8 +173,8 @@ module.exports = {
             tokenTypes.ACCESS
         );
 
-        const url = new URL(redirect);
+        const url = new URL(config.flask_server_url);
         url.searchParams.set("token", accessToken);
-        return res.redirect(url.toString());
+        return res.json({ url: url.toString() });
     }),
 };

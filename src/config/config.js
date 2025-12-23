@@ -6,6 +6,7 @@ dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const envVarsSchema = Joi.object()
     .keys({
+        FLASK_SERVER_URL: Joi.string().uri().required().description("Flask server URL"),
         DEPLOY_ENV: Joi.string().valid("Local", "Docker").required(),
         NODE_ENV: Joi.string()
             .valid("production", "development", "test")
@@ -49,6 +50,7 @@ if (error) {
 
 module.exports = {
     deploy_Env: envVars.DEPLOY_ENV,
+    flask_server_url: envVars.FLASK_SERVER_URL,
     env: envVars.NODE_ENV,
     port: envVars.PORT,
     cookieSecret: envVars.COOKIE_SECRET,
