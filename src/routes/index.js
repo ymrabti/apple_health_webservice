@@ -3,6 +3,7 @@ const authRoute = require('./auth.route');
 const userRoute = require('./user.route');
 const myRoute = require('./my.route');
 const docsRoute = require('./docs.route');
+const healthImportRoute = require('./health.import.route');
 const config = require('../config/config');
 const authCombined = require('../middlewares/auth');
 
@@ -20,6 +21,10 @@ const defaultRoutes = [
     {
         path: '/users',
         route: userRoute,
+    },
+    {
+        path: '/apple-health',
+        route: healthImportRoute,
     },
 ];
 
