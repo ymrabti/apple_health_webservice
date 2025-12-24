@@ -3,7 +3,6 @@ const catchAsync = require("../utils/catchAsync");
 const express = require("express");
 const moment = require("moment");
 const { authService, userService, tokenService } = require("../services");
-const logger = require("../config/logger");
 const config = require("../config/config");
 const pick = require("../utils/pick");
 const { tokenTypes } = require("../config/tokens");
@@ -156,6 +155,12 @@ module.exports = {
     sendVerificationEmail: catchAsync(sendVerificationEmail),
     verifyEmail: catchAsync(verifyEmail),
     oauthCallbackAuthenticate: catchAsync(async (req, res) => {
+        const provider = req.query.provider;
+        if (!provider) {
+            return res
+                .status(httpStatus.BAD_REQUEST)
+                .json({ message: "Missing 'provider' query parameter" });
+        }
 
         if (!req.user) {
             return res
@@ -173,7 +178,7 @@ module.exports = {
             tokenTypes.ACCESS
         );
 
-        const url = new URL(config.flask_server_url);
+        const url = new URL(provider);
         url.searchParams.set("token", accessToken);
         return res.json({ url: url.toString() });
     }),

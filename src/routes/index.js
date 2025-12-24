@@ -4,6 +4,7 @@ const userRoute = require('./user.route');
 const myRoute = require('./my.route');
 const docsRoute = require('./docs.route');
 const config = require('../config/config');
+const authCombined = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const defaultRoutes = [
         route: authRoute,
     },
     {
-        path: '/health',
+        path: '/users',
         route: userRoute,
     },
 ];
@@ -40,5 +41,7 @@ if (config.env === 'development') {
         router.use(route.path, route.route);
     });
 }
+
+router.get('/health', authCombined(), (req, res) => res.send('OK'));
 
 module.exports = router;
