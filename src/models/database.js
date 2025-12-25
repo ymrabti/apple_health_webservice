@@ -3,6 +3,9 @@ const config = require("../config/config");
 const { users: husers } = require("./users");
 const { tokens } = require("./tokens");
 const { health: checks } = require("./checks");
+const { userInfos } = require("./user_infos");
+const { dailySummaries } = require("./daily_summaries");
+const { activitySummaries } = require("./activity_summaries");
 
 const { DB_HOST, DB_DATABASE, DB_USER, DB_PORT, DB_PASSWORD } = config.mysql;
 
@@ -37,6 +40,9 @@ db.authenticate()
 const usersModel = husers(db);
 const tokenModel = tokens(db);
 const checkModel = checks(db);
+const userInfosModel = userInfos(db);
+const dailySummariesModel = dailySummaries(db);
+const activitySummariesModel = activitySummaries(db);
 
 usersModel.hasMany(tokenModel, { foreignKey: "userId", as: "tokens" });
 tokenModel.belongsTo(usersModel, { foreignKey: "id", as: "user" });
@@ -51,9 +57,22 @@ checkModel.belongsTo(usersModel, {
     as: "user",
 });
 
+// Relations for new health import tables
+usersModel.hasMany(userInfosModel, { foreignKey: "userId", as: "userInfos" });
+userInfosModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
+
+usersModel.hasMany(dailySummariesModel, { foreignKey: "userId", as: "dailySummaries" });
+dailySummariesModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
+
+usersModel.hasMany(activitySummariesModel, { foreignKey: "userId", as: "activitySummaries" });
+activitySummariesModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
+
 
 module.exports = {
     usersModel,
     tokenModel,
     checkModel,
+    userInfosModel,
+    dailySummariesModel,
+    activitySummariesModel,
 };

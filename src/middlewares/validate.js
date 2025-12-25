@@ -15,7 +15,6 @@ const validate = (schema) => (req, res, next) => {
             .map((details) => details.message)
             .filter((e) => {
                 const nmdls = !e.toString().includes("node_modules");
-                console.log(nmdls);
                 return nmdls;
             })
             .join(", ");

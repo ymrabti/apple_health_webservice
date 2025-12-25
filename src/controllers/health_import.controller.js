@@ -3,7 +3,11 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
-const { prisma } = require("../prisma");
+const {
+    userInfosModel,
+    dailySummariesModel,
+    activitySummariesModel,
+} = require("../models/database");
 
 const STATIC_ROOT = resolve("static");
 
@@ -30,7 +34,10 @@ function getUserId(req) {
     // Prefer authenticated user if available; else fallback to body.userId
     if (req.user && req.user.id) return req.user.id;
     if (req.body && req.body.userId) return req.body.userId;
-    throw new ApiError(httpStatus.BAD_REQUEST, "Missing userId in request or auth context");
+    throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Missing userId in request or auth context"
+    );
 }
 
 function normalizeDate(d) {
@@ -51,25 +58,42 @@ async function saveUserInfos(req, res, next) {
     try {
         const userId = getUserId(req);
         const { exportDate, attributes } = req.body || {};
+        const {
+            HKCharacteristicTypeIdentifierDateOfBirth: dateOfBirth,
+            HKCharacteristicTypeIdentifierBiologicalSex: biologicalSex,
+            HKCharacteristicTypeIdentifierBloodType: bloodType,
+            HKCharacteristicTypeIdentifierFitzpatrickSkinType:
+                fitzpatrickSkinType,
+            HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse:
+                cardioFitnessMedicationsUse,
+        } = attributes || {};
         const expDate = normalizeDate(exportDate);
         if (!expDate || !attributes || typeof attributes !== "object") {
-            throw new ApiError(httpStatus.BAD_REQUEST, "Invalid payload: exportDate and attributes are required");
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "Invalid payload: exportDate and attributes are required"
+            );
         }
         // Upsert by (userId + exportDate)
-        const existing = await prisma.userInfo.findFirst({ where: { userId, exportDate: toDateOnly(expDate) } });
+        const existing = await userInfosModel.findOne({
+            where: { userId, exportDate: toDateOnly(expDate) },
+        });
         let record;
         if (existing) {
-            record = await prisma.userInfo.update({
-                where: { id: existing.id },
-                data: { attributes },
-            });
+            record = await userInfosModel.update(
+                { attributes },
+                { where: { id: existing.id } }
+            );
         } else {
-            record = await prisma.userInfo.create({
-                data: { userId, exportDate: toDateOnly(expDate), attributes },
+            record = await userInfosModel.create({
+                userId,
+                exportDate: toDateOnly(expDate),
+                attributes,
             });
         }
         return res.status(httpStatus.OK).json({ ok: true, id: record.id });
     } catch (err) {
+        console.error(err);
         next(err);
     }
 }
@@ -80,7 +104,10 @@ async function saveDailySummaries(req, res, next) {
         const userId = getUserId(req);
         const { summaries } = req.body || {};
         if (!Array.isArray(summaries)) {
-            throw new ApiError(httpStatus.BAD_REQUEST, "Invalid payload: summaries array required");
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "Invalid payload: summaries array required"
+            );
         }
         let upserts = 0;
         for (const item of summaries) {
@@ -94,7 +121,7 @@ async function saveDailySummaries(req, res, next) {
             const date = toDateOnly(dateStr);
             const exportDate = exportDateStr ? toDateOnly(exportDateStr) : null;
             // Upsert via compound unique (userId, date, type)
-            await prisma.dailySummary.upsert({
+            await dailySummariesModel.upsert({
                 where: { userId_date_type: { userId, date, type } },
                 update: { value, unit, exportDate },
                 create: { userId, date, type, value, unit, exportDate },
@@ -114,14 +141,23 @@ async function saveActivitySummaries(req, res, next) {
         const { exportDate, summaries } = req.body || {};
         const expDate = normalizeDate(exportDate);
         if (!expDate || !Array.isArray(summaries)) {
-            throw new ApiError(httpStatus.BAD_REQUEST, "Invalid payload: exportDate and summaries array required");
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "Invalid payload: exportDate and summaries array required"
+            );
         }
         // Replace per (userId + exportDate)
-        await prisma.activitySummary.deleteMany({ where: { userId, exportDate: toDateOnly(expDate) } });
-        const record = await prisma.activitySummary.create({
-            data: { userId, exportDate: toDateOnly(expDate), summaries },
+        await activitySummariesModel.destroy({
+            where: { userId, exportDate: toDateOnly(expDate) },
         });
-        return res.status(httpStatus.OK).json({ ok: true, count: summaries.length, id: record.id });
+        const record = await activitySummariesModel.create({
+            userId,
+            exportDate: toDateOnly(expDate),
+            summaries,
+        });
+        return res
+            .status(httpStatus.OK)
+            .json({ ok: true, count: summaries.length, id: record.id });
     } catch (err) {
         next(err);
     }

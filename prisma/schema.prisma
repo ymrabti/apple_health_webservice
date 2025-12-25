@@ -13,7 +13,11 @@ model UserInfo {
   id         String   @id @default(uuid()) @db.Char(36)
   userId     String   @db.Char(36)
   exportDate DateTime @db.Date
-  attributes Json
+  dateOfBirth DateTime? @db.Date
+  biologicalSex String?  @db.VarChar(50)
+  bloodType String?  @db.VarChar(50)
+  fitzpatrickSkinType String?  @db.VarChar(50)
+  cardioFitnessMedicationsUse String? @db.VarChar(255)
   createdAt  DateTime? @default(now())
   updatedAt  DateTime?
 
