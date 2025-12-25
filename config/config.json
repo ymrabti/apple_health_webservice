@@ -2,7 +2,7 @@
   "development": {
     "username": "root",
     "password": null,
-    "database": "apple_health_db",
+    "database": "apple_healthkit_db",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
