@@ -126,23 +126,24 @@ async function saveDailySummaries(req, res, next) {
         for (const item of summaries) {
             if (!item || typeof item !== "object") continue;
             const dateStr = normalizeDate(item.date);
-            const type = String(item.type || "").trim();
-            if (!dateStr || !type) continue;
+            if (!dateStr) continue;
             const exportDateStr = normalizeDate(item.exportDate);
-            const value = item.value != null ? Number(item.value) : null;
-            const unit = item.unit || null;
             const date = toDateOnly(dateStr);
             const exportDate = exportDateStr ? toDateOnly(exportDateStr) : null;
-            console.log(item, { date, type, value, unit, exportDate });
-            // Upsert via compound unique (userId, date, type)
-            await dailySummariesModel.upsert({
+            // Normalize numeric fields if present
+            const payload = {
                 userId,
-                date,
-                type,
-                value,
-                unit,
                 exportDate,
-            });
+                date,
+            };
+            if (item.steps != null) payload.steps = Number(item.steps) || 0;
+            if (item.flights != null) payload.flights = Number(item.flights) || 0;
+            if (item.distance != null)
+                payload.distance = Number(item.distance);
+            if (item.active != null) payload.active = Number(item.active);
+            if (item.basal != null) payload.basal = Number(item.basal);
+            if (item.exercise != null) payload.exercise = Number(item.exercise);
+            await dailySummariesModel.upsert(payload);
             upserts += 1;
         }
         return res.status(httpStatus.OK).json({ ok: true, upserts });

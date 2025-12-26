@@ -23,16 +23,28 @@ const schemaDailySummaries = (sequelize) => ({
         type: DataTypes.DATEONLY,
         allowNull: false,
     },
-    type: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
+    steps:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
     },
-    value: {
+    flights:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    distance:{
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    unit: {
-        type: DataTypes.STRING(50),
+    active:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    basal:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    exercise:{
+        type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
     exportDate: {
@@ -63,7 +75,7 @@ module.exports = {
             timestamps: true,
             indexes: [
                 { name: "user_id_index", fields: ["userId"], using: "BTREE" },
-                { name: "user_date_type_unique", unique: true, fields: ["userId", "date", "type"] },
+                { name: "user_date_unique", unique: true, fields: ["userId", "date"] },
             ],
         });
         return DailySummariesModel;
