@@ -2,43 +2,63 @@ const Joi = require("joi");
 
 const saveUserInfos = {
     body: Joi.object().keys({
-        userId: Joi.string().required(),
-        dateOfBirth: Joi.date().iso().allow(null),
-        biologicalSex: Joi.string(),
-        bloodType: Joi.string(),
-        fitzpatrickSkinType: Joi.string(),
-        cardioFitnessMedicationsUse: Joi.string(),
+        userId: Joi.string(),
+        exportDate: Joi.date().iso().required(),
+        attributes: Joi.object({
+            HKCharacteristicTypeIdentifierDateOfBirth: Joi.date().iso(),
+            HKCharacteristicTypeIdentifierBiologicalSex: Joi.string(),
+            HKCharacteristicTypeIdentifierBloodType: Joi.string(),
+            HKCharacteristicTypeIdentifierFitzpatrickSkinType: Joi.string(),
+            HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse: Joi.string(),
+        }).required(),
     }),
 };
 
 const saveDailySummaries = {
     body: Joi.object().keys({
-        userId: Joi.string().required(),
-        date: Joi.date().iso().required(),
-        steps: Joi.number().integer(),
-        distance: Joi.number(),
-        caloriesBurned: Joi.number(),
+        userId: Joi.string(),
+        summaries: Joi.array()
+            .items(
+                Joi.object({
+                    date: Joi.date().iso().required(),
+                    exportDate: Joi.date().iso().allow(null),
+                    steps: Joi.number(),
+                    flights: Joi.number(),
+                    distance: Joi.number(),
+                    active: Joi.number(),
+                    basal: Joi.number(),
+                    exercise: Joi.number(),
+                })
+            )
+            .required(),
     }),
 };
 
 const saveActivitySummaries = {
     body: Joi.object().keys({
-        userId: Joi.string().required(),
-        activityType: Joi.string().required(),
-        duration: Joi.number(),
-        caloriesBurned: Joi.number(),
+        userId: Joi.string(),
+        exportDate: Joi.date().iso().required(),
+        summaries: Joi.array()
+            .items(
+                Joi.object({
+                    date: Joi.date().iso().required(),
+                }).unknown(true)
+            )
+            .required(),
     }),
 };
 
 const getDailySummaries = {
     query: Joi.object().keys({
-        userId: Joi.string().required(),
+        dateFrom: Joi.date().iso().required(),
+        dateTo: Joi.date().iso().required(),
     }),
 };
 
 const getActivitySummaries = {
     query: Joi.object().keys({
-        userId: Joi.string().required(),
+        dateFrom: Joi.date().iso().required(),
+        dateTo: Joi.date().iso().required(),
     }),
 };
 
