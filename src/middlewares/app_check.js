@@ -4,7 +4,6 @@ const config = require("../config/config");
 const { Socket } = require("socket.io");
 const { resolve } = require("path");
 const httpStatus = require("http-status");
-const fs = require("fs");
 
 const servicesFilePath =
     config.DEPLOY_ENV === "Docker"
@@ -66,7 +65,7 @@ const firebaseAppcheckSocket = async (socket, next) => {
 };
 
 /**
- * Send FCM Notification
+ * Send Notification
  * @param {admin.messaging.Message} message
  * @return {Promise<boolean>} true or false
  */

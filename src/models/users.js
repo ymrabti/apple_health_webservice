@@ -1,6 +1,5 @@
 const { DataTypes, Op, Sequelize } = require("sequelize");
 const bcrypt = require("bcryptjs");
-const validator = require("validator");
 
 const tablenameUsers = "users";
 const schemaUsers = {
@@ -71,31 +70,10 @@ const schemaUsers = {
         comment: "role field",
         defaultValue: "user",
     },
-    fcm: {
-        type: DataTypes.STRING(255),
-        comment: "fcm field",
-    },
     photo: {
         type: DataTypes.STRING(255),
         comment: "photo field",
         allowNull: false,
-    },
-    phoneNumber: {
-        type: DataTypes.STRING(20),
-        comment: "phoneNumber field",
-        validate: {
-            isValidPhone(value) {
-                if (value && !validator.isMobilePhone(value)) {
-                    throw new Error("Invalid phone number");
-                }
-            },
-        },
-        unique: "phone_number",
-    },
-    isPhoneVerified: {
-        type: DataTypes.BOOLEAN(),
-        comment: "isPhoneVerified field",
-        defaultValue: false,
     },
     isEmailVerified: {
         type: DataTypes.BOOLEAN(),
@@ -143,20 +121,6 @@ module.exports = {
             if (!email) return false;
             const where = {
                 email: email.toLowerCase(),
-                ...(excludeId && { id: { [Op.ne]: excludeId } }),
-            };
-            const user = await this.findOne({ where });
-            return !!user;
-        };
-
-        // Static method: isPhoneTaken
-        UsersModel.isPhoneTaken = async function isPhoneTaken(
-            phoneNumber,
-            excludeId = null
-        ) {
-            if (!phoneNumber) return false;
-            const where = {
-                phoneNumber,
                 ...(excludeId && { id: { [Op.ne]: excludeId } }),
             };
             const user = await this.findOne({ where });

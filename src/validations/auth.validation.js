@@ -78,7 +78,6 @@ const resetPassword = {
     body: Joi.object()
         .keys({
             oldPassword: Joi.string().required().custom(password),
-            phoneNumber: Joi.string().required(),
         })
         .custom((value, helpers) => {
             // Assign oldPassword to password

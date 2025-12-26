@@ -116,27 +116,6 @@ async function updateProfilePicture(req, res) {
  * @param {express.Request} req request
  * @param {express.Response} res response
  */
-const poke = async (req, res) => {
-    const user = await userService.getUserById(req.params.userId, req.query.email);
-    if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-    }
-    const ress = await sendNotification({
-        token: user.fcm,
-        notification: {
-            title: `${user.firstName} ${user.lastName}`,
-            body: `Hello ${user.firstName}`,
-            imageUrl: 'https://i.ytimg.com/vi/k8qUMKrp38g/maxresdefault.jpg',
-        },
-    })
-    res.sendStatus(ress ? httpStatus.OK : httpStatus.BAD_GATEWAY);
-};
-
-/**
- * get user
- * @param {express.Request} req request
- * @param {express.Response} res response
- */
 const getUser = async (req, res) => {
     const user = await userService.getUserByUsernameOrEmail(req.query.userName, req.query.email);
     if (!user) {
@@ -166,7 +145,6 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
-    poke: catchAsync(poke),
     createUser: catchAsync(createUser),
     getUsers: catchAsync(getUsers),
     getUser: catchAsync(getUser),

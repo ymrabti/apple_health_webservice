@@ -10,16 +10,6 @@ const { countChecks } = require("../services/user.service");
  * @param {express.Request} req request
  * @param {express.Response} res response
  */
-const updateUserFCM = async (req, res) => {
-    await userService.updateUserById(req.user.id, req.body);
-    res.sendStatus(httpStatus.OK);
-};
-
-/**
- * Update user
- * @param {express.Request} req request
- * @param {express.Response} res response
- */
 const myTodayChecks = async (req, res) => {
     const checks = await userService.myTodayChecks(
         req.user.id,
@@ -97,6 +87,5 @@ async function uploadNewDaily (req, res) {
 }
 
 module.exports = {
-    updateUserFCM: catchAsync(updateUserFCM),
     myTodayChecks: catchAsync(myTodayChecks),
 };

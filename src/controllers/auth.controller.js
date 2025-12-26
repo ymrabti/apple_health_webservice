@@ -19,7 +19,6 @@ const register = async (req, res) => {
     }
     const user = await userService.createUser({
         ...req.body,
-        phoneNumber: req.body.phone,
     });
     const tokens = await tokenService.generateAuthTokens(user);
     const userPayload = pick(user, ["id", "firstName", "lastName", "role"]);

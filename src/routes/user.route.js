@@ -12,8 +12,7 @@ const router = express.Router();
 router
     .route('/:userId')
     .delete(auth(allCapabilities.manageUsers), validate(userValidation.deleteUser), userController.deleteUser)
-    .put(auth(), validate(userValidation.updateUser), userController.updateUser)
-    .post(auth(allCapabilities.manageUsers), userController.poke)
+    .put(auth(), validate(userValidation.updateUser), userController.updateUser);
 
 router
     .route('/')

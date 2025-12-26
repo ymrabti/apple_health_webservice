@@ -3,7 +3,6 @@
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -52,4 +51,25 @@ model ActivitySummary {
 
   @@map("activity_summaries")
   @@index([userId, exportDate])
+}
+
+model Users {
+  id        String   @id @default(uuid()) @db.Char(36)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
+
+  @@map("users")
+}
+model Tokens {
+  id        String   @id @default(uuid()) @db.Char(36)
+  token     String   @db.VarChar(500)
+  userId    String   @db.Char(36)
+  expires   DateTime
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
+
+  @@map("refresh_tokens")
+  @@index([userId])
 }

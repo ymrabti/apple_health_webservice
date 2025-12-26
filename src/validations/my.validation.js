@@ -2,11 +2,6 @@ const Joi = require('joi');
 const { email } = require('./custom.validation');
 const { roles } = require('../config/roles');
 
-const updateFCM_Token = {
-    body: Joi.object().keys({
-        fcm: Joi.string().optional().allow(''),
-    }),
-};
 
 const getUserPhoto = {
     query: Joi.object().keys({
@@ -45,7 +40,6 @@ const deleteUser = {
 };
 
 module.exports = {
-    updateFCM_Token,
     getUserPhoto,
     updateUser,
     deleteUser,

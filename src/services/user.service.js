@@ -15,9 +15,6 @@ const createUser = async (userBody) => {
     if (await usersModel.isEmailTaken(userBody.email)) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
     }
-    if (await usersModel.isPhoneTaken(userBody.phoneNumber)) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
-    }
     const created = await usersModel.create(userBody);
     const getted = await usersModel.findByPk(created.get().id);
     return getted.dataValues;
@@ -84,12 +81,6 @@ const updateUserById = async (userId, updateBody) => {
         (await usersModel.isEmailTaken(updateBody.email, userId))
     ) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
-    }
-    if (
-        updateBody.isPhoneTaken &&
-        (await usersModel.isPhoneTaken(updateBody.isPhoneTaken, userId))
-    ) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
     }
 
     if (updateBody.password && updateBody.oldPassword) {

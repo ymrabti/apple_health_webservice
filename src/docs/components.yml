@@ -18,7 +18,6 @@ components:
                 email: fake@example.com
                 name: fake name
                 role: user
-                phoneNumber: +212603671780
                 firstName: Mohammed Ali
                 lastName: Bacha
 
