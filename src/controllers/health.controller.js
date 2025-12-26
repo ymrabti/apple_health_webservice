@@ -101,6 +101,35 @@ async function saveUserInfos(req, res, next) {
     }
 }
 
+// GET user infos (current user)
+async function getUserInfos(req, res, next) {
+    try {
+        const userId = getUserId(req);
+        const user = await usersModel.findByPk(userId);
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+        }
+        return res.status(httpStatus.OK).json({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            dateOfBirth: user.dateOfBirth,
+            biologicalSex: user.biologicalSex,
+            bloodType: user.bloodType,
+            fitzpatrickSkinType: user.fitzpatrickSkinType,
+            cardioFitnessMedicationsUse: user.cardioFitnessMedicationsUse,
+            isEmailVerified: user.isEmailVerified,
+            email: user.email,
+            role: user.role,
+            photo: user.photo,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
 // 2) Save daily summaries with uniqueness on (date + type)
 async function saveDailySummaries(req, res, next) {
     try {
@@ -149,6 +178,20 @@ async function saveDailySummaries(req, res, next) {
     }
 }
 
+// GET daily summaries for a user
+async function getDailySummaries(req, res, next) {
+    try {
+        const userId = getUserId(req);
+        const items = await dailySummariesModel.findAll({
+            where: { userId },
+            order: [["date", "DESC"]],
+        });
+        return res.status(httpStatus.OK).json({ ok: true, items });
+    } catch (err) {
+        next(err);
+    }
+}
+
 // 3) Save activity summaries array (by exportDate file)
 async function saveActivitySummaries(req, res, next) {
     try {
@@ -185,8 +228,25 @@ async function saveActivitySummaries(req, res, next) {
     }
 }
 
+// GET activity summaries for a user
+async function getActivitySummaries(req, res, next) {
+    try {
+        const userId = getUserId(req);
+        const items = await activitySummariesModel.findAll({
+            where: { userId },
+            order: [["exportDate", "DESC"]],
+        });
+        return res.status(httpStatus.OK).json({ ok: true, items });
+    } catch (err) {
+        next(err);
+    }
+}
+
 module.exports = {
+    getUserInfos,
     saveUserInfos,
+    getDailySummaries,
     saveDailySummaries,
+    getActivitySummaries,
     saveActivitySummaries,
 };
