@@ -15,25 +15,6 @@ const {
     convertHKCardioFitnessMedicationsUse,
 } = require("../utils/Apple.Convertions");
 
-async function ensureDir(dirPath) {
-    await fsp.mkdir(dirPath, { recursive: true });
-}
-
-async function readJson(filePath, fallback = {}) {
-    try {
-        const buf = await fsp.readFile(filePath);
-        return JSON.parse(buf.toString("utf8"));
-    } catch (e) {
-        return fallback;
-    }
-}
-
-async function writeJson(filePath, data) {
-    const json = JSON.stringify(data, null, 2);
-    await ensureDir(join(filePath, ".."));
-    await fsp.writeFile(filePath, json, "utf8");
-}
-
 function getUserId(req) {
     // Prefer authenticated user if available; else fallback to body.userId
     if (req.user && req.user.id) return req.user.id;
@@ -145,6 +126,7 @@ async function saveDailySummaries(req, res, next) {
             const unit = item.unit || null;
             const date = toDateOnly(dateStr);
             const exportDate = exportDateStr ? toDateOnly(exportDateStr) : null;
+            console.log(exportDate);
             // Upsert via compound unique (userId, date, type)
             await dailySummariesModel.upsert({
                 where: { userId_date_type: { userId, date, type } },
