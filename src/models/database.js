@@ -43,7 +43,7 @@ const dailySummariesModel = dailySummaries(db);
 const activitySummariesModel = activitySummaries(db);
 
 usersModel.hasMany(tokenModel, { foreignKey: "userId", as: "tokens" });
-tokenModel.belongsTo(usersModel, { foreignKey: "id", as: "user" });
+tokenModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
 
 usersModel.hasMany(checkModel, {
     foreignKey: "userId",
@@ -51,7 +51,7 @@ usersModel.hasMany(checkModel, {
 });
 
 checkModel.belongsTo(usersModel, {
-    foreignKey: "id",
+    foreignKey: "userId",
     as: "user",
 });
 

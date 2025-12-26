@@ -109,6 +109,13 @@ async function saveDailySummaries(req, res, next) {
     try {
         const userId = getUserId(req);
         const { summaries } = req.body || {};
+        const userExists = await usersModel.findByPk(userId);
+        if (!userExists) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "Invalid userId: user does not exist"
+            );
+        }
         if (!Array.isArray(summaries)) {
             throw new ApiError(
                 httpStatus.BAD_REQUEST,
@@ -126,12 +133,15 @@ async function saveDailySummaries(req, res, next) {
             const unit = item.unit || null;
             const date = toDateOnly(dateStr);
             const exportDate = exportDateStr ? toDateOnly(exportDateStr) : null;
-            console.log(exportDate);
+            console.log(item, { date, type, value, unit, exportDate });
             // Upsert via compound unique (userId, date, type)
             await dailySummariesModel.upsert({
-                where: { userId_date_type: { userId, date, type } },
-                update: { value, unit, exportDate },
-                create: { userId, date, type, value, unit, exportDate },
+                userId,
+                date,
+                type,
+                value,
+                unit,
+                exportDate,
             });
             upserts += 1;
         }
