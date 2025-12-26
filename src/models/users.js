@@ -24,7 +24,7 @@ const schemaUsers = {
     },
     dateOfBirth: {
         type: DataTypes.DATEONLY,
-        allowNull: false,
+        allowNull: true,
         comment: "dateOfBirth field",
     },
     userName: {
@@ -32,10 +32,45 @@ const schemaUsers = {
         allowNull: false,
         comment: "userName field",
     },
-    gender: {
-        type: DataTypes.ENUM("male", "female"),
-        allowNull: false,
-        comment: "gender field",
+    biologicalSex: {
+        type: DataTypes.ENUM("NOT_SET", "FEMALE", "MALE", "OTHER"),
+        allowNull: true,
+    },
+    bloodType: {
+        type: DataTypes.ENUM(
+            "NOT_SET",
+            "A_POSITIVE",
+            "A_NEGATIVE",
+            "B_POSITIVE",
+            "B_NEGATIVE",
+            "AB_POSITIVE",
+            "AB_NEGATIVE",
+            "O_POSITIVE",
+            "O_NEGATIVE"
+        ),
+        allowNull: true,
+    },
+    fitzpatrickSkinType: {
+        type: DataTypes.ENUM(
+            "NOT_SET",
+            "TYPE_I",
+            "TYPE_II",
+            "TYPE_III",
+            "TYPE_IV",
+            "TYPE_V",
+            "TYPE_VI"
+        ),
+        allowNull: true,
+    },
+    cardioFitnessMedicationsUse: {
+        type: DataTypes.ENUM(
+            "NOT_SET",
+            "NONE",
+            "BETA_BLOCKERS",
+            "CALCIUM_CHANNEL_BLOCKERS",
+            "COMBINATION"
+        ),
+        allowNull: true,
     },
     email: {
         type: DataTypes.STRING(255),

@@ -10,7 +10,9 @@ yarn-error.log
 !.env*.example
 dist
 .env
-
+# Prisma migrations
+prisma/migrations/*
+!prisma/migrations/migration_lock.toml
 # Code coverage
 coverage
 google-services.json

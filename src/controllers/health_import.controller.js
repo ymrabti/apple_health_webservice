@@ -4,12 +4,16 @@ const fsp = require("fs/promises");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
 const {
-    userInfosModel,
     dailySummariesModel,
     activitySummariesModel,
+    usersModel,
 } = require("../models/database");
-
-const STATIC_ROOT = resolve("static");
+const {
+    convertHKBiologicalSex,
+    convertHKBloodType,
+    convertHKFitzpatrickSkinType,
+    convertHKCardioFitnessMedicationsUse,
+} = require("../utils/Apple.Convertions");
 
 async function ensureDir(dirPath) {
     await fsp.mkdir(dirPath, { recursive: true });
@@ -75,23 +79,44 @@ async function saveUserInfos(req, res, next) {
             );
         }
         // Upsert by (userId + exportDate)
-        const existing = await userInfosModel.findOne({
-            where: { userId, exportDate: toDateOnly(expDate) },
-        });
-        let record;
-        if (existing) {
-            record = await userInfosModel.update(
-                { attributes },
-                { where: { id: existing.id } }
-            );
-        } else {
-            record = await userInfosModel.create({
-                userId,
-                exportDate: toDateOnly(expDate),
-                attributes,
-            });
-        }
-        return res.status(httpStatus.OK).json({ ok: true, id: record.id });
+        const existing = await usersModel.findByPk(userId);
+        await usersModel.update(
+            {
+                dateOfBirth,
+                biologicalSex: convertHKBiologicalSex(biologicalSex),
+                bloodType: convertHKBloodType(bloodType),
+                fitzpatrickSkinType:
+                    convertHKFitzpatrickSkinType(fitzpatrickSkinType),
+                cardioFitnessMedicationsUse:
+                    convertHKCardioFitnessMedicationsUse(
+                        cardioFitnessMedicationsUse
+                    ),
+            },
+            { where: { id: existing.id } }
+        );
+        let diff = {};
+        if (existing.dateOfBirth !== dateOfBirth)
+            diff.dateOfBirth = { old: existing.dateOfBirth, new: dateOfBirth };
+        if (existing.biologicalSex !== biologicalSex)
+            diff.biologicalSex = {
+                old: existing.biologicalSex,
+                new: biologicalSex,
+            };
+        if (existing.bloodType !== bloodType)
+            diff.bloodType = { old: existing.bloodType, new: bloodType };
+        if (existing.fitzpatrickSkinType !== fitzpatrickSkinType)
+            diff.fitzpatrickSkinType = {
+                old: existing.fitzpatrickSkinType,
+                new: fitzpatrickSkinType,
+            };
+        if (
+            existing.cardioFitnessMedicationsUse !== cardioFitnessMedicationsUse
+        )
+            diff.cardioFitnessMedicationsUse = {
+                old: existing.cardioFitnessMedicationsUse,
+                new: cardioFitnessMedicationsUse,
+            };
+        return res.status(httpStatus.OK).json({ ok: true, diff });
     } catch (err) {
         console.error(err);
         next(err);
@@ -150,11 +175,18 @@ async function saveActivitySummaries(req, res, next) {
         await activitySummariesModel.destroy({
             where: { userId, exportDate: toDateOnly(expDate) },
         });
-        const record = await activitySummariesModel.create({
-            userId,
-            exportDate: toDateOnly(expDate),
-            summaries,
-        });
+        const record = await activitySummariesModel.bulkCreate(
+            summaries.map((item) => {
+                const dateStr = normalizeDate(item.date);
+                const date = toDateOnly(dateStr);
+                return {
+                    userId,
+                    exportDate: toDateOnly(expDate),
+                    date,
+                    ...item,
+                };
+            })
+        );
         return res
             .status(httpStatus.OK)
             .json({ ok: true, count: summaries.length, id: record.id });

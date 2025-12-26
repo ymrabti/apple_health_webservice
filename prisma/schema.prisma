@@ -2,74 +2,144 @@
 // Datasource: MySQL (DATABASE_URL must be set in .env)
 
 datasource db {
-  provider = "mysql"
+    provider = "mysql"
 }
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
-model UserInfo {
-  id         String   @id @default(uuid()) @db.Char(36)
-  userId     String   @db.Char(36)
-  exportDate DateTime @db.Date
-  dateOfBirth DateTime? @db.Date
-  biologicalSex String?  @db.VarChar(50)
-  bloodType String?  @db.VarChar(50)
-  fitzpatrickSkinType String?  @db.VarChar(50)
-  cardioFitnessMedicationsUse String? @db.VarChar(255)
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime?
+enum UserRole {
+    user
+    admin
+    moderator
+}
 
-  @@map("user_infos")
-  @@index([userId])
+enum BiologicalSex {
+    NOT_SET
+    FEMALE
+    MALE
+    OTHER
+}
+
+enum BloodType {
+    NOT_SET
+    A_POSITIVE
+    A_NEGATIVE
+    B_POSITIVE
+    B_NEGATIVE
+    AB_POSITIVE
+    AB_NEGATIVE
+    O_POSITIVE
+    O_NEGATIVE
+}
+
+enum FitzpatrickSkinType {
+    NOT_SET
+    TYPE_I
+    TYPE_II
+    TYPE_III
+    TYPE_IV
+    TYPE_V
+    TYPE_VI
+}
+
+enum CardioFitnessMedicationsUse {
+    NOT_SET
+    NONE
+    BETA_BLOCKERS
+    CALCIUM_CHANNEL_BLOCKERS
+    COMBINATION
+}
+
+enum TokenType {
+    refresh
+    resetPassword
+    verifyEmail
 }
 
 model DailySummary {
-  id         String    @id @default(uuid()) @db.Char(36)
-  userId     String    @db.Char(36)
-  date       DateTime  @db.Date
-  type       String    @db.VarChar(100)
-  value      Decimal?  @db.Decimal(12, 4)
-  unit       String?   @db.VarChar(50)
-  exportDate DateTime? @db.Date
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime?
+    id         String    @id @default(uuid()) @db.Char(36)
+    userId     String    @db.Char(36)
+    date       DateTime  @db.Date
+    type       String    @db.VarChar(100)
+    value      Decimal?  @db.Decimal(12, 4)
+    unit       String?   @db.VarChar(50)
+    exportDate DateTime? @db.Date
+    createdAt  DateTime? @default(now())
+    updatedAt  DateTime?
 
-  @@map("daily_summaries")
-  @@unique([userId, date, type])
-  @@index([userId])
+    // Relations
+    user Users @relation(fields: [userId], references: [id])
+
+    @@unique([userId, date, type])
+    @@index([userId])
+    @@map("daily_summaries")
 }
 
 model ActivitySummary {
-  id         String   @id @default(uuid()) @db.Char(36)
-  userId     String   @db.Char(36)
-  exportDate DateTime @db.Date
-  summaries  Json
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime?
+    id         String    @id @default(uuid()) @db.Char(36)
+    userId     String    @db.Char(36)
+    exportDate DateTime  @db.Date
+    dateComponents DateTime @db.Date
+    activeEnergyBurned Decimal? @db.Decimal(12, 4)
+    activeEnergyBurnedGoal Decimal? @db.Decimal(12, 4)
+    activeEnergyBurnedUnit String? @db.VarChar(50)
+    appleMoveTime Decimal? @db.Decimal(12, 4)
+    appleMoveTimeGoal Decimal? @db.Decimal(12, 4)
+    appleExerciseTime Decimal? @db.Decimal(12, 4)
+    appleExerciseTimeGoal Decimal? @db.Decimal(12, 4)
+    appleStandHours Decimal? @db.Decimal(12, 4)
+    appleStandHoursGoal Decimal? @db.Decimal(12, 4)
+    createdAt  DateTime? @default(now())
+    updatedAt  DateTime?
 
-  @@map("activity_summaries")
-  @@index([userId, exportDate])
+    // Relations
+    user Users @relation(fields: [userId], references: [id])
+
+    @@index([userId, exportDate])
+    @@map("activity_summaries")
 }
 
 model Users {
-  id        String   @id @default(uuid()) @db.Char(36)
-  email     String   @unique @db.VarChar(255)
-  password  String   @db.VarChar(255)
-  createdAt DateTime? @default(now())
-  updatedAt DateTime?
+    id                          String                      @id @default(uuid()) @db.Char(36)
+    firstName                   String                      @db.VarChar(100)
+    lastName                    String                      @db.VarChar(100)
+    dateOfBirth                 DateTime                    @db.Date
+    userName                    String                      @db.VarChar(255)
+    email                       String                      @unique @db.VarChar(255)
+    password                    String                      @db.VarChar(255)
+    role                        UserRole                    @default(user)
+    photo                       String                      @db.VarChar(255)
+    isEmailVerified             Boolean                     @default(false)
+    createdAt                   DateTime?                   @db.DateTime
+    updatedAt                   DateTime?                   @db.DateTime
+    biologicalSex               BiologicalSex               @default(NOT_SET)
+    bloodType                   BloodType                   @default(NOT_SET)
+    fitzpatrickSkinType         FitzpatrickSkinType         @default(NOT_SET)
+    cardioFitnessMedicationsUse CardioFitnessMedicationsUse @default(NOT_SET)
 
-  @@map("users")
+    // Relations
+    tokens            Tokens[]
+    activitySummaries ActivitySummary[]
+    dailySummaries    DailySummary[]
+
+    @@map("users")
 }
-model Tokens {
-  id        String   @id @default(uuid()) @db.Char(36)
-  token     String   @db.VarChar(500)
-  userId    String   @db.Char(36)
-  expires   DateTime
-  createdAt DateTime? @default(now())
-  updatedAt DateTime?
 
-  @@map("refresh_tokens")
-  @@index([userId])
+model Tokens {
+    id          String    @id @default(uuid()) @db.Char(36)
+    token       String    @db.VarChar(255)
+    userId      String    @db.Char(36)
+    type        TokenType
+    expires     DateTime  @db.DateTime
+    blacklisted Boolean?  @default(false)
+    createdAt   DateTime? @db.DateTime
+    updatedAt   DateTime? @db.DateTime
+
+    // Relations
+    user Users @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+    @@map("tokens")
 }

@@ -7,8 +7,6 @@ const register = {
         userName: Joi.string().required(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
-        dateOfBirth: Joi.date().required(),
-        gender: Joi.string().required().valid('male', 'female'),
         email: Joi.string().required().custom(email),
         role: Joi.string().allow("", null),
         password: Joi.string().required().custom(password),

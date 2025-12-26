@@ -16,7 +16,6 @@ const updateUser = {
             lastName: Joi.string().required(),
             userName: Joi.string().required(),
             email: Joi.string().custom(email).allow(null),
-            gender: Joi.string().allow(null).valid('male', 'female'),
             role: Joi.string().required().valid(...roles),
             dateOfBirth: Joi.date().allow(null).iso(),
         })

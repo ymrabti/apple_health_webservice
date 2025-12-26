@@ -23,10 +23,46 @@ const schemaActivitySummaries = (sequelize) => ({
         type: DataTypes.DATEONLY,
         allowNull: false,
     },
-    summaries: {
-        type: DataTypes.JSON,
+    dateComponents:{
+        type: DataTypes.DATEONLY,
         allowNull: false,
-        comment: "Raw ActivitySummary list as JSON",
+
+    },
+    activeEnergyBurned:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    activeEnergyBurnedGoal:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    activeEnergyBurnedUnit:{
+        type: DataTypes.STRING(50),
+        allowNull: true,
+    },
+    appleMoveTime:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    appleMoveTimeGoal:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    appleExerciseTime:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    appleExerciseTimeGoal:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    appleStandHours:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
+    },
+    appleStandHoursGoal:{
+        type: DataTypes.DECIMAL(12, 4),
+        allowNull: true,
     },
     createdAt: {
         type: DataTypes.DATE,

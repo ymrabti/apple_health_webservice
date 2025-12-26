@@ -13,14 +13,11 @@ const db = require("./models/database");
 (async () => {
     try {
         const user = await db.usersModel.create({
-            // id: v4(),
             email: "john2@example.com",
             password: "Test1234",
             userName: "johnny12",
             firstName: "John",
             lastName: "Doe",
-            gender: 'male',
-            dateOfBirth: new Date('2000'),
             photo: "avatar.png",
         });
 

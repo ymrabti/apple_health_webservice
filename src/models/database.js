@@ -3,7 +3,6 @@ const config = require("../config/config");
 const { users: husers } = require("./users");
 const { tokens } = require("./tokens");
 const { health: checks } = require("./checks");
-const { userInfos } = require("./user_infos");
 const { dailySummaries } = require("./daily_summaries");
 const { activitySummaries } = require("./activity_summaries");
 
@@ -40,7 +39,6 @@ db.authenticate()
 const usersModel = husers(db);
 const tokenModel = tokens(db);
 const checkModel = checks(db);
-const userInfosModel = userInfos(db);
 const dailySummariesModel = dailySummaries(db);
 const activitySummariesModel = activitySummaries(db);
 
@@ -58,9 +56,6 @@ checkModel.belongsTo(usersModel, {
 });
 
 // Relations for new health import tables
-usersModel.hasMany(userInfosModel, { foreignKey: "userId", as: "userInfos" });
-userInfosModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
-
 usersModel.hasMany(dailySummariesModel, { foreignKey: "userId", as: "dailySummaries" });
 dailySummariesModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
 
@@ -72,7 +67,6 @@ module.exports = {
     usersModel,
     tokenModel,
     checkModel,
-    userInfosModel,
     dailySummariesModel,
     activitySummariesModel,
 };
