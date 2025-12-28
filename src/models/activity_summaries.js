@@ -23,44 +23,43 @@ const schemaActivitySummaries = (sequelize) => ({
         type: DataTypes.DATEONLY,
         allowNull: false,
     },
-    dateComponents:{
+    dateComponents: {
         type: DataTypes.DATEONLY,
         allowNull: false,
-
     },
-    activeEnergyBurned:{
+    activeEnergyBurned: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    activeEnergyBurnedGoal:{
+    activeEnergyBurnedGoal: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    activeEnergyBurnedUnit:{
+    activeEnergyBurnedUnit: {
         type: DataTypes.STRING(50),
         allowNull: true,
     },
-    appleMoveTime:{
+    appleMoveTime: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    appleMoveTimeGoal:{
+    appleMoveTimeGoal: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    appleExerciseTime:{
+    appleExerciseTime: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    appleExerciseTimeGoal:{
+    appleExerciseTimeGoal: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    appleStandHours:{
+    appleStandHours: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
-    appleStandHoursGoal:{
+    appleStandHoursGoal: {
         type: DataTypes.DECIMAL(12, 4),
         allowNull: true,
     },
@@ -90,8 +89,16 @@ module.exports = {
                 tableName: tablenameActivitySummaries,
                 timestamps: true,
                 indexes: [
-                    { name: "user_id_index", fields: ["userId"], using: "BTREE" },
-                    { name: "user_export_index", fields: ["userId", "exportDate"], using: "BTREE" },
+                    {
+                        name: "user_id_index",
+                        fields: ["userId"],
+                        using: "BTREE",
+                    },
+                    {
+                        name: "user_export_index",
+                        fields: ["userId", "exportDate"],
+                        using: "BTREE",
+                    },
                 ],
             }
         );

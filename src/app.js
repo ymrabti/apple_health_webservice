@@ -27,6 +27,7 @@ const { errorConverter, errorHandler } = require("./middlewares/error");
 const ApiError = require("./utils/ApiError");
 const { MySocketIO } = require("./websockets/socket.io");
 const { resolve } = require("path");
+const logger = require("./config/logger");
 
 const allowedOrigins = [
     "https://employee_portal.youmrabti.com",
@@ -126,7 +127,7 @@ app.use("/api-docs", swaggerUi.serve, async (req, res) => {
 });
 
 // api routes
-app.use("/cdn", express.static(topStatic));
+app.use("/", express.static(topStatic));
 app.use("/api", /* firebaseAppcheck, */ routes);
 // send back a 404 error for any unknown api request
 /**
@@ -135,7 +136,11 @@ app.use("/api", /* firebaseAppcheck, */ routes);
  * @param {express.Response} res response
  */
 app.use((req, res, next) => {
-    console.log(req.path + " path Not found");
+    logger.info(req.path + " path Not found");
+    if (req.path.includes("/.well-known/")) {
+        logger.info("Well-known path accessed");
+        return res.status(200).send("ok");
+    }
     next(new ApiError(httpStatus.NOT_FOUND, "Not found"));
 });
 

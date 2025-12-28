@@ -11,6 +11,8 @@ const {
     convertHKFitzpatrickSkinType,
     convertHKCardioFitnessMedicationsUse,
 } = require("../utils/Apple.Convertions");
+const logger = require("../config/logger");
+const { Op } = require("sequelize");
 
 function getUserId(req) {
     // Prefer authenticated user if available; else fallback to body.userId
@@ -163,9 +165,9 @@ async function saveDailySummaries(req, res, next) {
                 date,
             };
             if (item.steps != null) payload.steps = Number(item.steps) || 0;
-            if (item.flights != null) payload.flights = Number(item.flights) || 0;
-            if (item.distance != null)
-                payload.distance = Number(item.distance);
+            if (item.flights != null)
+                payload.flights = Number(item.flights) || 0;
+            if (item.distance != null) payload.distance = Number(item.distance);
             if (item.active != null) payload.active = Number(item.active);
             if (item.basal != null) payload.basal = Number(item.basal);
             if (item.exercise != null) payload.exercise = Number(item.exercise);
@@ -179,13 +181,28 @@ async function saveDailySummaries(req, res, next) {
 }
 
 // GET daily summaries for a user
+/**
+ * Get daily summaries for a user
+ * @param {import('express').Request} req request
+ * @param {import('express').Response} res response
+ * @param {import('express').NextFunction} next next middleware function
+ * @returns {Promise<void>}
+ */
 async function getDailySummaries(req, res, next) {
     try {
+        const { dateFrom, dateTo } = req.query;
         const userId = getUserId(req);
         const items = await dailySummariesModel.findAll({
-            where: { userId },
+            where: {
+                userId,
+                date: {
+                    [Op.gte]: toDateOnly(normalizeDate(dateFrom)),
+                    [Op.lte]: toDateOnly(normalizeDate(dateTo)),
+                },
+            },
             order: [["date", "DESC"]],
         });
+        logger.info(`Fetched ${items.length} daily summaries for user ${userId}`);
         return res.status(httpStatus.OK).json({ ok: true, items });
     } catch (err) {
         next(err);
@@ -204,25 +221,23 @@ async function saveActivitySummaries(req, res, next) {
                 "Invalid payload: exportDate and summaries array required"
             );
         }
-        // Replace per (userId + exportDate)
-        await activitySummariesModel.destroy({
-            where: { userId, exportDate: toDateOnly(expDate) },
-        });
-        const record = await activitySummariesModel.bulkCreate(
-            summaries.map((item) => {
-                const dateStr = normalizeDate(item.date);
-                const date = toDateOnly(dateStr);
-                return {
-                    userId,
-                    exportDate: toDateOnly(expDate),
-                    date,
-                    ...item,
-                };
-            })
-        );
+        for (const item of summaries) {
+            if (!item || typeof item !== "object") continue;
+            const dateComponentsStr = normalizeDate(item.dateComponents);
+            if (!dateComponentsStr) continue;
+            const dateComponents = toDateOnly(dateComponentsStr);
+            // Normalize numeric fields if present
+            const payload = {
+                userId,
+                exportDate: toDateOnly(expDate),
+                dateComponents,
+                ...item
+            };
+            await activitySummariesModel.upsert(payload);
+        }
         return res
             .status(httpStatus.OK)
-            .json({ ok: true, count: summaries.length, id: record.id });
+            .json({ ok: true, count: summaries.length });
     } catch (err) {
         next(err);
     }
@@ -242,10 +257,40 @@ async function getActivitySummaries(req, res, next) {
     }
 }
 
+// GET stats for a user
+async function getStatsSummaries(req, res, next) {
+    try {
+        const userId = getUserId(req);
+        const sumDistance = await dailySummariesModel.sum("distance", {
+            where: { userId },
+        });
+        const sequelize = activitySummariesModel.sequelize;
+        const goalAchievements = await activitySummariesModel.count({
+            where: sequelize.and(
+                { userId },
+                sequelize.where(
+                    sequelize.col("activeEnergyBurned"),
+                    ">=",
+                    sequelize.col("activeEnergyBurnedGoal")
+                )
+            ),
+        });
+        const daysTracked = await dailySummariesModel.count({
+            where: { userId },
+        });
+        return res
+            .status(httpStatus.OK)
+            .json({ ok: true, sumDistance, goalAchievements, daysTracked });
+    } catch (err) {
+        next(err);
+    }
+}
+
 module.exports = {
     getUserInfos,
     saveUserInfos,
     getDailySummaries,
+    getStatsSummaries,
     saveDailySummaries,
     getActivitySummaries,
     saveActivitySummaries,

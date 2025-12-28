@@ -9,7 +9,8 @@ const saveUserInfos = {
             HKCharacteristicTypeIdentifierBiologicalSex: Joi.string(),
             HKCharacteristicTypeIdentifierBloodType: Joi.string(),
             HKCharacteristicTypeIdentifierFitzpatrickSkinType: Joi.string(),
-            HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse: Joi.string(),
+            HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse:
+                Joi.string(),
         }).required(),
     }),
 };
@@ -41,7 +42,16 @@ const saveActivitySummaries = {
         summaries: Joi.array()
             .items(
                 Joi.object({
-                    date: Joi.date().iso().required(),
+                    dateComponents: Joi.date().iso().required(),
+                    activeEnergyBurned: Joi.number(),
+                    activeEnergyBurnedGoal: Joi.number(),
+                    activeEnergyBurnedUnit: Joi.string(),
+                    appleMoveTime: Joi.number(),
+                    appleMoveTimeGoal: Joi.number(),
+                    appleExerciseTime: Joi.number(),
+                    appleExerciseTimeGoal: Joi.number(),
+                    appleStandHours: Joi.number(),
+                    appleStandHoursGoal: Joi.number(),
                 }).unknown(true)
             )
             .required(),
