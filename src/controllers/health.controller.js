@@ -125,9 +125,11 @@ async function getUserInfos(req, res, next) {
             fitzpatrickSkinType: user.fitzpatrickSkinType,
             cardioFitnessMedicationsUse: user.cardioFitnessMedicationsUse,
             isEmailVerified: user.isEmailVerified,
+            userName: user.userName,
+            weightInKilograms: user.weightInKilograms,
+            heightInCentimeters: user.heightInCentimeters,
             email: user.email,
             role: user.role,
-            photo: user.photo,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         });
