@@ -99,6 +99,11 @@ module.exports = {
                         fields: ["userId", "exportDate"],
                         using: "BTREE",
                     },
+                    {
+                        name: "user_datecomponents_unique",
+                        unique: true,
+                        fields: ["userId", "dateComponents"],
+                    }
                 ],
             }
         );

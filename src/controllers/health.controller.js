@@ -202,7 +202,9 @@ async function getDailySummaries(req, res, next) {
             },
             order: [["date", "DESC"]],
         });
-        logger.info(`Fetched ${items.length} daily summaries for user ${userId}`);
+        logger.info(
+            `Fetched ${items.length} daily summaries for user ${userId}`
+        );
         return res.status(httpStatus.OK).json({ ok: true, items });
     } catch (err) {
         next(err);
@@ -221,6 +223,21 @@ async function saveActivitySummaries(req, res, next) {
                 "Invalid payload: exportDate and summaries array required"
             );
         }
+        const lastDateDomponents = await activitySummariesModel.findOne({
+            where: { userId },
+            order: [["dateComponents", "DESC"]],
+        });
+        /* const newRowsSummaries = summaries.filter((item) => {
+            const dateComponentsStr = normalizeDate(item.dateComponents);
+            if (!dateComponentsStr) return false;
+            const dateComponents = toDateOnly(dateComponentsStr);
+            if (!lastDateDomponents) return true;
+            const lastDateOnly = toDateOnly(lastDateDomponents.dataValues.dateComponents);
+            return (
+                dateComponents >= lastDateOnly
+            );
+        }); */
+        let upserts = 0;
         for (const item of summaries) {
             if (!item || typeof item !== "object") continue;
             const dateComponentsStr = normalizeDate(item.dateComponents);
@@ -231,13 +248,36 @@ async function saveActivitySummaries(req, res, next) {
                 userId,
                 exportDate: toDateOnly(expDate),
                 dateComponents,
-                ...item
             };
+            if (item.activeEnergyBurned != null)
+                payload.activeEnergyBurned =
+                    Number(item.activeEnergyBurned) || 0;
+            if (item.activeEnergyBurnedGoal != null)
+                payload.activeEnergyBurnedGoal =
+                    Number(item.activeEnergyBurnedGoal) || 0;
+            if (item.activeEnergyBurnedUnit != null)
+                payload.activeEnergyBurnedUnit = item.activeEnergyBurnedUnit;
+            if (item.appleMoveTime != null)
+                payload.appleMoveTime = Number(item.appleMoveTime) || 0;
+            if (item.appleMoveTimeGoal != null)
+                payload.appleMoveTimeGoal = Number(item.appleMoveTimeGoal) || 0;
+            if (item.appleExerciseTime != null)
+                payload.appleExerciseTime = Number(item.appleExerciseTime) || 0;
+            if (item.appleExerciseTimeGoal != null)
+                payload.appleExerciseTimeGoal =
+                    Number(item.appleExerciseTimeGoal) || 0;
+            if (item.appleStandHours != null)
+                payload.appleStandHours = Number(item.appleStandHours) || 0;
+            if (item.appleStandHoursGoal != null)
+                payload.appleStandHoursGoal =
+                    Number(item.appleStandHoursGoal) || 0;
+
             await activitySummariesModel.upsert(payload);
+            upserts += 1;
         }
         return res
             .status(httpStatus.OK)
-            .json({ ok: true, count: summaries.length });
+            .json({ ok: true, count: upserts, attempted: summaries.length });
     } catch (err) {
         next(err);
     }
