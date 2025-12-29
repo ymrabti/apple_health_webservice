@@ -122,6 +122,8 @@ model Users {
     bloodType                   BloodType                   @default(NOT_SET)
     fitzpatrickSkinType         FitzpatrickSkinType         @default(NOT_SET)
     cardioFitnessMedicationsUse CardioFitnessMedicationsUse @default(NOT_SET)
+    weightInKilograms           Decimal?                    @db.Decimal(5, 2)
+    heightInCentimeters         Decimal?                    @db.Decimal(5, 2)
 
     // Relations
     tokens            Tokens[]

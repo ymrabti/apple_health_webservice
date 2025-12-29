@@ -11,6 +11,8 @@ const saveUserInfos = {
             HKCharacteristicTypeIdentifierFitzpatrickSkinType: Joi.string(),
             HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse:
                 Joi.string(),
+            weightInKilograms: Joi.number(),
+            heightInCentimeters: Joi.number(),
         }).required(),
     }),
 };

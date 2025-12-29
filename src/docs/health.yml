@@ -1,0 +1,377 @@
+paths:
+  /api/apple-health/user-infos:
+    get:
+      summary: Get current user infos
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User infos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfosResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      summary: Upsert user infos from Apple Health attributes
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInfosRequest'
+      responses:
+        '200':
+          description: Upserted user infos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkDiffResponse'
+        '400':
+          description: Invalid payload
+  /api/apple-health/daily-summaries:
+    get:
+      summary: List daily summaries
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: dateFrom
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: dateTo
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Daily summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailySummary'
+    post:
+      summary: Upsert daily summaries batch
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailySummariesRequest'
+      responses:
+        '200':
+          description: Upsert result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  upserts:
+                    type: integer
+  /api/apple-health/activity-summaries:
+    get:
+      summary: List activity summaries
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: dateFrom
+          required: false
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: dateTo
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Activity summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActivitySummary'
+    post:
+      summary: Upsert activity summaries batch
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivitySummariesRequest'
+      responses:
+        '200':
+          description: Upsert result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  count:
+                    type: integer
+                  attempted:
+                    type: integer
+  /api/apple-health/stats-summaries:
+    get:
+      summary: Get aggregate stats for user
+      tags: [Health]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  sumDistance:
+                    type: number
+                  goalAchievements:
+                    type: integer
+                  daysTracked:
+                    type: integer
+components:
+  schemas:
+    UserInfosRequest:
+      type: object
+      required: [exportDate, attributes]
+      properties:
+        userId:
+          type: string
+          description: Optional when derived from auth
+        exportDate:
+          type: string
+          format: date
+        attributes:
+          type: object
+          properties:
+            HKCharacteristicTypeIdentifierDateOfBirth:
+              type: string
+              format: date
+            HKCharacteristicTypeIdentifierBiologicalSex:
+              type: string
+            HKCharacteristicTypeIdentifierBloodType:
+              type: string
+            HKCharacteristicTypeIdentifierFitzpatrickSkinType:
+              type: string
+            HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse:
+              type: string
+    UserInfosResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        biologicalSex:
+          type: string
+        bloodType:
+          type: string
+        fitzpatrickSkinType:
+          type: string
+        cardioFitnessMedicationsUse:
+          type: string
+        isEmailVerified:
+          type: boolean
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        photo:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OkDiffResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        diff:
+          type: object
+    DailySummariesRequest:
+      type: object
+      required: [summaries]
+      properties:
+        userId:
+          type: string
+          description: Optional when derived from auth
+        summaries:
+          type: array
+          items:
+            type: object
+            required: [date]
+            properties:
+              date:
+                type: string
+                format: date
+              exportDate:
+                type: string
+                format: date
+                nullable: true
+              steps:
+                type: number
+              flights:
+                type: number
+              distance:
+                type: number
+              active:
+                type: number
+              basal:
+                type: number
+              exercise:
+                type: number
+    DailySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        date:
+          type: string
+          format: date
+        exportDate:
+          type: string
+          format: date
+        steps:
+          type: number
+        flights:
+          type: number
+        distance:
+          type: number
+        active:
+          type: number
+        basal:
+          type: number
+        exercise:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ActivitySummariesRequest:
+      type: object
+      required: [exportDate, summaries]
+      properties:
+        userId:
+          type: string
+          description: Optional when derived from auth
+        exportDate:
+          type: string
+          format: date
+        summaries:
+          type: array
+          items:
+            type: object
+            required: [dateComponents]
+            properties:
+              dateComponents:
+                type: string
+                format: date
+              activeEnergyBurned:
+                type: number
+              activeEnergyBurnedGoal:
+                type: number
+              activeEnergyBurnedUnit:
+                type: string
+              appleMoveTime:
+                type: number
+              appleMoveTimeGoal:
+                type: number
+              appleExerciseTime:
+                type: number
+              appleExerciseTimeGoal:
+                type: number
+              appleStandHours:
+                type: number
+              appleStandHoursGoal:
+                type: number
+    ActivitySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        exportDate:
+          type: string
+          format: date
+        dateComponents:
+          type: string
+          format: date
+        activeEnergyBurned:
+          type: number
+        activeEnergyBurnedGoal:
+          type: number
+        activeEnergyBurnedUnit:
+          type: string
+        appleMoveTime:
+          type: number
+        appleMoveTimeGoal:
+          type: number
+        appleExerciseTime:
+          type: number
+        appleExerciseTimeGoal:
+          type: number
+        appleStandHours:
+          type: number
+        appleStandHoursGoal:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

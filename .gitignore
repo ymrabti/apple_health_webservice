@@ -1,6 +1,6 @@
 # Dependencies
 node_modules
-static
+static/*
 aws
 # yarn error logs
 yarn-error.log

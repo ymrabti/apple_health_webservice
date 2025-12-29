@@ -100,6 +100,16 @@ const schemaUsers = {
             len: [8, 255],
         },
     },
+    weightInKilograms: {
+        type: DataTypes.DECIMAL(5, 2),
+        comment: "weightInKilograms field",
+        allowNull: true,
+    },
+    heightInCentimeters: {
+        type: DataTypes.DECIMAL(5, 2),
+        comment: "heightInCentimeters field",
+        allowNull: true,
+    },
     role: {
         type: DataTypes.ENUM("user", "admin", "moderator"),
         comment: "role field",

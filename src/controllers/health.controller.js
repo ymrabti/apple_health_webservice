@@ -50,6 +50,8 @@ async function saveUserInfos(req, res, next) {
                 fitzpatrickSkinType,
             HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse:
                 cardioFitnessMedicationsUse,
+            weightInKilograms,
+            heightInCentimeters,
         } = attributes || {};
         const expDate = normalizeDate(exportDate);
         if (!expDate || !attributes || typeof attributes !== "object") {
@@ -71,6 +73,8 @@ async function saveUserInfos(req, res, next) {
                     convertHKCardioFitnessMedicationsUse(
                         cardioFitnessMedicationsUse
                     ),
+                weightInKilograms,
+                heightInCentimeters,
             },
             { where: { id: existing.id } }
         );
