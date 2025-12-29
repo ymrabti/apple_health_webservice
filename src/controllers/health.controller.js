@@ -37,6 +37,64 @@ function toDateOnly(dateStr) {
     return new Date(`${dateStr}T00:00:00.000Z`);
 }
 
+function computeHealthScore(summary) {
+    // Weighted score based on completion ratios; skip weights with missing goals
+    const toRatio = (value, goal) => {
+        if (goal == null || goal === 0 || value == null) return null;
+        return Math.min(1, Number(value) / Number(goal));
+    };
+
+    const weights = {
+        energy: 0.4,
+        moveTime: 0.2,
+        exercise: 0.2,
+        stand: 0.2,
+    };
+
+    const ratios = {
+        energy: toRatio(
+            summary.activeEnergyBurned,
+            summary.activeEnergyBurnedGoal
+        ),
+        moveTime: toRatio(summary.appleMoveTime, summary.appleMoveTimeGoal),
+        exercise: toRatio(
+            summary.appleExerciseTime,
+            summary.appleExerciseTimeGoal
+        ),
+        stand: toRatio(summary.appleStandHours, summary.appleStandHoursGoal),
+    };
+
+    let score = 0;
+    let totalWeight = 0;
+    for (const key of Object.keys(weights)) {
+        if (ratios[key] != null) {
+            score += ratios[key] * weights[key];
+            totalWeight += weights[key];
+        }
+    }
+    if (totalWeight === 0) return null;
+    const normalized = score / totalWeight; // 0..1
+    return Math.round(normalized * 100); // percentage 0..100
+}
+
+function healthScoreToGrade(score) {
+    if (score == null) return null;
+    const s = Number(score);
+    if (s >= 97) return "A+";
+    if (s >= 93) return "A";
+    if (s >= 90) return "A-";
+    if (s >= 87) return "B+";
+    if (s >= 83) return "B";
+    if (s >= 80) return "B-";
+    if (s >= 77) return "C+";
+    if (s >= 73) return "C";
+    if (s >= 70) return "C-";
+    if (s >= 67) return "D+";
+    if (s >= 63) return "D";
+    if (s >= 60) return "D-";
+    return "F";
+}
+
 // 1) Save user infos (Me.attributes) marked by exportDate
 async function saveUserInfos(req, res, next) {
     try {
@@ -324,9 +382,27 @@ async function getStatsSummaries(req, res, next) {
         const daysTracked = await dailySummariesModel.count({
             where: { userId },
         });
-        return res
-            .status(httpStatus.OK)
-            .json({ ok: true, sumDistance, goalAchievements, daysTracked });
+        const allActivities = await activitySummariesModel.findAll({
+            where: { userId },
+        });
+        const scores = allActivities
+            .map((row) => computeHealthScore(row.get({ plain: true })))
+            .filter((v) => v != null);
+        const healthScore =
+            scores.length > 0
+                ? Math.round(
+                      scores.reduce((sum, v) => sum + v, 0) / scores.length
+                  )
+                : null;
+        const healthGrade = healthScoreToGrade(healthScore);
+        return res.status(httpStatus.OK).json({
+            ok: true,
+            sumDistance,
+            goalAchievements,
+            daysTracked,
+            healthScore,
+            healthGrade,
+        });
     } catch (err) {
         next(err);
     }
