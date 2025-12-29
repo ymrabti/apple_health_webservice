@@ -69,8 +69,8 @@ const getDailySummaries = {
 
 const getActivitySummaries = {
     query: Joi.object().keys({
-        dateFrom: Joi.date().iso().required(),
-        dateTo: Joi.date().iso().required(),
+        dateFrom: Joi.date().iso().optional(),
+        dateTo: Joi.date().iso().optional(),
     }),
 };
 

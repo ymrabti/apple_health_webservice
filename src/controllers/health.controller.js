@@ -15,7 +15,6 @@ const logger = require("../config/logger");
 const { Op } = require("sequelize");
 
 function getUserId(req) {
-    // Prefer authenticated user if available; else fallback to body.userId
     if (req.user && req.user.id) return req.user.id;
     if (req.body && req.body.userId) return req.body.userId;
     throw new ApiError(
@@ -31,17 +30,22 @@ function normalizeDate(d) {
     return dt.toISOString().slice(0, 10);
 }
 
+function isFiniteNumber(n) {
+    return Number.isFinite(n);
+}
+
 function toDateOnly(dateStr) {
-    // Convert YYYY-MM-DD string to Date at midnight UTC
     if (!dateStr) return null;
     return new Date(`${dateStr}T00:00:00.000Z`);
 }
 
 function computeHealthScore(summary) {
-    // Weighted score based on completion ratios; skip weights with missing goals
     const toRatio = (value, goal) => {
         if (goal == null || goal === 0 || value == null) return null;
-        return Math.min(1, Number(value) / Number(goal));
+        const v = Number(value);
+        const g = Number(goal);
+        if (!isFiniteNumber(v) || !isFiniteNumber(g) || g === 0) return null;
+        return Math.min(1, v / g);
     };
 
     const weights = {
@@ -67,14 +71,48 @@ function computeHealthScore(summary) {
     let score = 0;
     let totalWeight = 0;
     for (const key of Object.keys(weights)) {
-        if (ratios[key] != null) {
-            score += ratios[key] * weights[key];
+        const r = ratios[key];
+        if (r != null && isFiniteNumber(r)) {
+            score += r * weights[key];
             totalWeight += weights[key];
         }
     }
     if (totalWeight === 0) return null;
-    const normalized = score / totalWeight; // 0..1
-    return Math.round(normalized * 100); // percentage 0..100
+    const normalized = score / totalWeight;
+    return isFiniteNumber(normalized) ? Math.round(normalized * 100) : null;
+}
+
+function computeStepsScore(dailies) {
+    if (!Array.isArray(dailies) || dailies.length === 0) return null;
+    const byDate = new Map();
+    for (const row of dailies) {
+        const dateKey = normalizeDate(row.date);
+        if (!dateKey) continue;
+        const steps = row.steps != null ? Number(row.steps) : 0;
+        byDate.set(dateKey, Math.max(byDate.get(dateKey) || 0, steps));
+    }
+    const dates = Array.from(byDate.keys());
+    if (dates.length === 0) return null;
+    const hits = dates.filter((d) => byDate.get(d) >= 10000).length;
+    return Math.round((hits / dates.length) * 100);
+}
+
+function computeStreakScore(dailies) {
+    if (!Array.isArray(dailies) || dailies.length === 0) return null;
+    const sorted = [...dailies].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+    );
+    let streak = 0;
+    for (const row of sorted) {
+        const steps = row.steps != null ? Number(row.steps) : 0;
+        if (steps >= 10000) {
+            streak += 1;
+        } else {
+            break;
+        }
+    }
+    if (streak === 0) return 0;
+    return Math.min(100, Math.round((streak / 30) * 100));
 }
 
 function healthScoreToGrade(score) {
@@ -118,7 +156,6 @@ async function saveUserInfos(req, res, next) {
                 "Invalid payload: exportDate and attributes are required"
             );
         }
-        // Upsert by (userId + exportDate)
         const existing = await usersModel.findByPk(userId);
         await usersModel.update(
             {
@@ -222,7 +259,6 @@ async function saveDailySummaries(req, res, next) {
             const exportDateStr = normalizeDate(item.exportDate);
             const date = toDateOnly(dateStr);
             const exportDate = exportDateStr ? toDateOnly(exportDateStr) : null;
-            // Normalize numeric fields if present
             const payload = {
                 userId,
                 exportDate,
@@ -245,13 +281,6 @@ async function saveDailySummaries(req, res, next) {
 }
 
 // GET daily summaries for a user
-/**
- * Get daily summaries for a user
- * @param {import('express').Request} req request
- * @param {import('express').Response} res response
- * @param {import('express').NextFunction} next next middleware function
- * @returns {Promise<void>}
- */
 async function getDailySummaries(req, res, next) {
     try {
         const { dateFrom, dateTo } = req.query;
@@ -287,27 +316,12 @@ async function saveActivitySummaries(req, res, next) {
                 "Invalid payload: exportDate and summaries array required"
             );
         }
-        const lastDateDomponents = await activitySummariesModel.findOne({
-            where: { userId },
-            order: [["dateComponents", "DESC"]],
-        });
-        /* const newRowsSummaries = summaries.filter((item) => {
-            const dateComponentsStr = normalizeDate(item.dateComponents);
-            if (!dateComponentsStr) return false;
-            const dateComponents = toDateOnly(dateComponentsStr);
-            if (!lastDateDomponents) return true;
-            const lastDateOnly = toDateOnly(lastDateDomponents.dataValues.dateComponents);
-            return (
-                dateComponents >= lastDateOnly
-            );
-        }); */
         let upserts = 0;
         for (const item of summaries) {
             if (!item || typeof item !== "object") continue;
             const dateComponentsStr = normalizeDate(item.dateComponents);
             if (!dateComponentsStr) continue;
             const dateComponents = toDateOnly(dateComponentsStr);
-            // Normalize numeric fields if present
             const payload = {
                 userId,
                 exportDate: toDateOnly(expDate),
@@ -362,16 +376,37 @@ async function getActivitySummaries(req, res, next) {
 }
 
 // GET stats for a user
+// example: /api/health/stats?dateFrom=2024-01-01&dateTo=2024-06-30
 async function getStatsSummaries(req, res, next) {
     try {
         const userId = getUserId(req);
+        const { dateFrom, dateTo } = req.query;
+
+        const from = toDateOnly(normalizeDate(dateFrom));
+        const to = toDateOnly(normalizeDate(dateTo));
+
+        const whereDaily = { userId };
+        if (from || to) {
+            whereDaily.date = {};
+            if (from) whereDaily.date[Op.gte] = from;
+            if (to) whereDaily.date[Op.lte] = to;
+        }
+
+        const whereActivity = { userId };
+        if (from || to) {
+            whereActivity.dateComponents = {};
+            if (from) whereActivity.dateComponents[Op.gte] = from;
+            if (to) whereActivity.dateComponents[Op.lte] = to;
+        }
+
         const sumDistance = await dailySummariesModel.sum("distance", {
-            where: { userId },
+            where: whereDaily,
         });
+
         const sequelize = activitySummariesModel.sequelize;
         const goalAchievements = await activitySummariesModel.count({
             where: sequelize.and(
-                { userId },
+                whereActivity,
                 sequelize.where(
                     sequelize.col("activeEnergyBurned"),
                     ">=",
@@ -379,29 +414,57 @@ async function getStatsSummaries(req, res, next) {
                 )
             ),
         });
+
         const daysTracked = await dailySummariesModel.count({
-            where: { userId },
+            where: whereDaily,
         });
+
         const allActivities = await activitySummariesModel.findAll({
-            where: { userId },
+            where: whereActivity,
         });
-        const scores = allActivities
+        const activityScores = allActivities
             .map((row) => computeHealthScore(row.get({ plain: true })))
-            .filter((v) => v != null);
-        const healthScore =
-            scores.length > 0
+            .filter((v) => v != null && isFiniteNumber(v));
+        const activityScore =
+            activityScores.length > 0
                 ? Math.round(
-                      scores.reduce((sum, v) => sum + v, 0) / scores.length
+                      activityScores.reduce((sum, v) => sum + v, 0) /
+                          activityScores.length
                   )
                 : null;
+
+        const allDaily = await dailySummariesModel.findAll({
+            where: whereDaily,
+        });
+        const stepsScore = computeStepsScore(allDaily);
+        const streakScore = computeStreakScore(allDaily);
+
+        const weights = { activity: 0.6, steps: 0.25, streak: 0.15 };
+        let weightedSum = 0;
+        let weightTotal = 0;
+        const add = (val, w) => {
+            if (val != null && isFiniteNumber(val)) {
+                weightedSum += val * w;
+                weightTotal += w;
+            }
+        };
+        add(activityScore, weights.activity);
+        add(stepsScore, weights.steps);
+        add(streakScore, weights.streak);
+        console.log({ weightedSum });
+        const healthScore =
+            weightTotal > 0 && isFiniteNumber(weightedSum)
+                ? Math.round(weightedSum / weightTotal)
+                : null;
         const healthGrade = healthScoreToGrade(healthScore);
+
         return res.status(httpStatus.OK).json({
-            ok: true,
             sumDistance,
             goalAchievements,
             daysTracked,
             healthScore,
             healthGrade,
+            components: { activityScore, stepsScore, streakScore },
         });
     } catch (err) {
         next(err);

@@ -39,6 +39,9 @@ router
 // POST /api/apple-health/stats-summaries
 router
     .route("/stats-summaries")
-    .get(controller.getStatsSummaries)
+    .get(
+        validate(healthValidation.getActivitySummaries),
+        controller.getStatsSummaries
+    );
 
 module.exports = router;
