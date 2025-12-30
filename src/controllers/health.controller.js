@@ -365,8 +365,21 @@ async function saveActivitySummaries(req, res, next) {
 async function getActivitySummaries(req, res, next) {
     try {
         const userId = getUserId(req);
+
+        const { dateFrom, dateTo } = req.query;
+
+        const from = toDateOnly(normalizeDate(dateFrom));
+        const to = toDateOnly(normalizeDate(dateTo));
+
+        const whereDaily = { userId };
+        if (from || to) {
+            whereDaily.dateComponents = {};
+            if (from) whereDaily.dateComponents[Op.gte] = from;
+            if (to) whereDaily.dateComponents[Op.lte] = to;
+        }
+
         const items = await activitySummariesModel.findAll({
-            where: { userId },
+            where: whereDaily,
             order: [["exportDate", "DESC"]],
         });
         return res.status(httpStatus.OK).json({ ok: true, items });
@@ -451,7 +464,6 @@ async function getStatsSummaries(req, res, next) {
         add(activityScore, weights.activity);
         add(stepsScore, weights.steps);
         add(streakScore, weights.streak);
-        console.log({ weightedSum });
         const healthScore =
             weightTotal > 0 && isFiniteNumber(weightedSum)
                 ? Math.round(weightedSum / weightTotal)
