@@ -3,6 +3,7 @@ const authCombined = require("../middlewares/auth");
 const controller = require("../controllers/health.controller");
 const validate = require("../middlewares/validate");
 const { healthValidation } = require("../validations");
+const multer = require("multer");
 
 const router = express.Router();
 router.use(authCombined());
@@ -43,5 +44,15 @@ router
         validate(healthValidation.getActivitySummaries),
         controller.getStatsSummaries
     );
+
+// Configure multer for file uploads
+const upload = multer({
+    dest: '/tmp/uploads/',
+    limits: {
+        fileSize: 100 * 1024 * 1024 // 100MB limit
+    }
+});
+
+router.post("/import", upload.single("file"), controller.importHealthData);
 
 module.exports = router;

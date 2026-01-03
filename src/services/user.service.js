@@ -15,6 +15,9 @@ const createUser = async (userBody) => {
     if (await usersModel.isEmailTaken(userBody.email)) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
     }
+    if (await usersModel.isUsernameTaken(userBody.userName)) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Username already taken");
+    }
     const created = await usersModel.create(userBody);
     const getted = await usersModel.findByPk(created.get().id);
     return getted.dataValues;

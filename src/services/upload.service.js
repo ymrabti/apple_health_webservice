@@ -10,14 +10,12 @@ const config = require('../config/config');
  * @param {string} destination destination path
  */
 function makeIfNorExists(destination) {
-    console.log(dirname(destination));
     if (!existsSync(dirname(destination))) {
         mkdirSync(dirname(destination), { recursive: true });
-        console.log('Folder created successfully!');
     }
 }
 
-const pathUploads = resolve(config.DEPLOY_ENV == 'Docker' ? '/usr/src/health' : 'static');
+const pathUploads = resolve(config.persistent_Storage_Dir, 'uploads');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const destination = resolve(pathUploads, req.params.userName)

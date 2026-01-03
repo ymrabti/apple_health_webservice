@@ -6,9 +6,16 @@ const { health: checks } = require("./checks");
 const { dailySummaries } = require("./daily_summaries");
 const { activitySummaries } = require("./activity_summaries");
 
-const { DB_HOST, DB_DATABASE, DB_USER, DB_PORT, DB_PASSWORD } = config.mysql;
+const {
+    DB_HOST,
+    DB_DATABASE,
+    DB_USER,
+    DB_PORT,
+    DB_PASSWORD,
+    DATABASE_URL, //
+} = config.mysql;
 
-const db = new Sequelize({
+const db = new Sequelize(DATABASE_URL || null, {
     host: DB_HOST,
     database: DB_DATABASE,
     username: DB_USER,
@@ -56,12 +63,20 @@ checkModel.belongsTo(usersModel, {
 });
 
 // Relations for new health import tables
-usersModel.hasMany(dailySummariesModel, { foreignKey: "userId", as: "dailySummaries" });
+usersModel.hasMany(dailySummariesModel, {
+    foreignKey: "userId",
+    as: "dailySummaries",
+});
 dailySummariesModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
 
-usersModel.hasMany(activitySummariesModel, { foreignKey: "userId", as: "activitySummaries" });
-activitySummariesModel.belongsTo(usersModel, { foreignKey: "userId", as: "user" });
-
+usersModel.hasMany(activitySummariesModel, {
+    foreignKey: "userId",
+    as: "activitySummaries",
+});
+activitySummariesModel.belongsTo(usersModel, {
+    foreignKey: "userId",
+    as: "user",
+});
 
 module.exports = {
     usersModel,

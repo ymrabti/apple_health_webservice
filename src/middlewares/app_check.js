@@ -5,10 +5,7 @@ const { Socket } = require("socket.io");
 const { resolve } = require("path");
 const httpStatus = require("http-status");
 
-const servicesFilePath =
-    config.DEPLOY_ENV === "Docker"
-        ? resolve(__dirname, "google-services.json")
-        : resolve("google-services.json");
+const servicesFilePath = resolve(config.google_Application_Credentials);
 
 /* const serviceAccount = JSON.parse(fs.readFileSync(servicesFilePath, "utf-8"));
 

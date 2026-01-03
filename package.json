@@ -7,6 +7,9 @@
     "engines": {
         "node": ">=12.0.0"
     },
+    "prisma": {
+        "schema": "prisma/schema.prisma"
+    },
     "scripts": {
         "build": "webpack",
         "start": "pm2 start ecosystem.config.json --no-daemon",
@@ -20,15 +23,25 @@
         "sequelize-automate": "node src/utils/Automate.js",
         "migration:generate": "sequelize-cli db:migrate",
         "migration:generate:dev": "sequelize-cli db:migrate --env development",
-        "prisma:reset": "prisma migrate reset",
+        "prisma:reset:local": "dotenv -e .env.local -- prisma migrate reset",
+        "prisma:reset:staging": "dotenv -e .env.staging -- prisma migrate reset",
+        "prisma:reset:prod": "dotenv -e .env.prod -- prisma migrate reset",
+        "prisma:migrate:local": "dotenv -e .env.local -- prisma migrate dev",
+        "prisma:migrate:staging": "dotenv -e .env.staging -- prisma migrate dev",
+        "prisma:migrate:prod": "dotenv -e .env.prod -- prisma migrate deploy",
         "prisma:generate": "prisma generate",
-        "prisma:migrate": "prisma migrate dev",
-        "prisma:studio": "prisma studio",
-        "preprisma:generate:migrate": "yarn prisma:reset",
-        "prisma:generate:migrate": "yarn prisma:generate && yarn prisma:migrate",
-        "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
+        "prisma:studio:local": "dotenv -e .env.local -- prisma studio",
+        "prisma:studio:staging": "dotenv -e .env.staging -- prisma studio",
+        "prisma:studio:prod": "dotenv -e .env.prod -- prisma studio",
+        "db:local": "yarn prisma:reset:local && yarn prisma:generate && yarn prisma:migrate:local",
+        "db:staging": "yarn prisma:reset:staging && yarn prisma:generate && yarn prisma:migrate:staging",
+        "db:prod": "yarn prisma:generate && yarn prisma:migrate:prod",
+        "docker:prod": "docker-compose -f docker-compose.yml up -d --build",
+        "docker:down:prod": "docker-compose -f docker-compose.yml down -v",
         "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-        "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up"
+        "docker:down:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml down -v",
+        "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up",
+        "docker:down:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml down -v"
     },
     "keywords": [
         "node",
@@ -83,6 +96,7 @@
         "socket.io": "^4.8.1",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1",
+        "unzipper": "^0.12.3",
         "uuid": "^11.1.0",
         "validator": "^13.0.0",
         "webpack": "^5.99.9",
@@ -93,6 +107,7 @@
     },
     "devDependencies": {
         "coveralls": "^3.0.7",
+        "dotenv-cli": "^11.0.0",
         "eslint": "^9.30.1",
         "node-mocks-http": "^1.8.0",
         "nodemon": "^2.0.0",

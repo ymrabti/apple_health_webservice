@@ -6,7 +6,9 @@ dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const envVarsSchema = Joi.object()
     .keys({
-        DEPLOY_ENV: Joi.string().valid("Local", "Docker").required(),
+        LOGS_DIR: Joi.string().default("logs"),
+        PERSISTENT_STORAGE_DIR: Joi.string().default("static"),
+        GOOGLE_APPLICATION_CREDENTIALS: Joi.string().default("google-services.json"),
         NODE_ENV: Joi.string()
             .valid("production", "development", "test")
             .required(),
@@ -16,6 +18,7 @@ const envVarsSchema = Joi.object()
         DB_USER: Joi.string().required().description("MySQL DB user"),
         DB_PASSWORD: Joi.string().allow("").description("MySQL DB password"),
         DB_DATABASE: Joi.string().required().description("MySQL DB name"),
+        DATABASE_URL: Joi.string().description("Database connection URL"),
         JWT_SECRET: Joi.string().required().description("JWT secret key"),
         JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
             .default(30)
@@ -48,7 +51,9 @@ if (error) {
 }
 
 module.exports = {
-    deploy_Env: envVars.DEPLOY_ENV,
+    logs_Dir: envVars.LOGS_DIR,
+    google_Application_Credentials: envVars.GOOGLE_APPLICATION_CREDENTIALS,
+    persistent_Storage_Dir: envVars.PERSISTENT_STORAGE_DIR,
     env: envVars.NODE_ENV,
     port: envVars.PORT,
     cookieSecret: envVars.COOKIE_SECRET,
@@ -58,6 +63,7 @@ module.exports = {
         DB_USER: envVars.DB_USER,
         DB_PASSWORD: envVars.DB_PASSWORD,
         DB_DATABASE: envVars.DB_DATABASE,
+        DATABASE_URL: envVars.DATABASE_URL,
     },
     cookie: {
         access_token_name: "auth_cookie_access_token",

@@ -5,9 +5,7 @@ const path = require("path");
 const fs = require("fs");
 
 // log directory path
-const logDirectory = path.resolve(
-    config.deploy_Env == "Docker" ? "/usr/src/webserver/log" : "log"
-);
+const logDirectory = path.resolve(config.logs_Dir);
 
 // ensure log directory exists
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);

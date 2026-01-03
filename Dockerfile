@@ -8,14 +8,20 @@ RUN yarn install --pure-lockfile --only=production
 COPY --chown=root:root . .
 RUN yarn build
 
-RUN mkdir -p /usr/src/healthy
+RUN mkdir -p /usr/src/health/uploads/_temp_ \
+ && mkdir -p /usr/src/logs \
+ && chown -R node:node /usr/src/app \
+ && chown -R node:node /usr/src/health \
+ && chown -R node:node /usr/src/logs
 
 FROM node:iron-alpine
 
 RUN mkdir -p /usr/src/app \
- && mkdir -p /usr/src/healthy/_temp_ \
+ && mkdir -p /usr/src/health/uploads/_temp_ \
+ && mkdir -p /usr/src/logs \
  && chown -R node:node /usr/src/app \
- && chown -R node:node /usr/src/healthy
+ && chown -R node:node /usr/src/logs \
+ && chown -R node:node /usr/src/health
 
 
 WORKDIR /usr/src/app
@@ -25,6 +31,8 @@ COPY --chown=node:node --from=builder /usr/src/app/package.json ./
 COPY --chown=node:node --from=builder /usr/src/app/yarn.lock ./
 COPY --chown=node:node --from=builder /usr/src/app/google-services.json /usr/src/app/dist/google-services.json
 COPY --chown=node:node --from=builder /usr/src/app/ecosystem.config.json ./ecosystem.config.json
+COPY prisma ./prisma
+COPY .env.prod .env.prod
 
 
 USER node

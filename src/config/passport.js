@@ -1,6 +1,7 @@
 const { Strategy, ExtractJwt } = require("passport-jwt");
 const config = require("./config");
 const { tokenTypes } = require("./tokens");
+const jwt = require("jsonwebtoken");
 const { Strategy: CookieStrategy } = require("passport-cookie");
 const { usersModel } = require("../models/database");
 
@@ -9,6 +10,15 @@ const cookieOptions = {
     secretOrKey: config.jwt.secret,
     signed: true,
 };
+
+// Generate short-lived token (5 minutes) for Python worker
+function generateWorkerToken(userId) {
+    return jwt.sign(
+        { userId, worker: true },
+        config.jwt.secret,
+        { expiresIn: '5m' }
+    );
+}
 
 const jwtOptions = {
     secretOrKey: config.jwt.secret,
@@ -90,4 +100,5 @@ module.exports = {
     jwtSocketStrategy,
     jwtSocketHeadersStrategy,
     qrAuthFromBodyStrategy,
+    generateWorkerToken,
 };

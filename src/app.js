@@ -30,11 +30,7 @@ const { resolve } = require("path");
 const logger = require("./config/logger");
 
 const allowedOrigins = [
-    "https://employee_portal.youmrabti.com",
-    "https://employee_backoffice.youmrabti.com",
-    "https://dock_empl.youmrabti.com",
-    "https://dock_empl_backoffice.youmrabti.com",
-    "https://survey123.arcgis.com",
+    "https://healthy.youmrabti.com",
 ];
 
 const corsOptions = {

@@ -77,7 +77,7 @@ async function registerMiddleware(req, res, next, validator) {
                 if (err) {
                     console.error('Error moving file:', err);
                 } else {
-                    console.log('File moved successfully!');
+                    // console.log('File moved successfully!');
                 }
             });
         Object.assign(req, value);

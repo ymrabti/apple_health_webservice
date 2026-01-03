@@ -24,6 +24,7 @@ const schemaUsers = {
     },
     dateOfBirth: {
         type: DataTypes.DATEONLY,
+        defaultValue: DataTypes.NOW,
         allowNull: true,
         comment: "dateOfBirth field",
     },
@@ -31,6 +32,7 @@ const schemaUsers = {
         type: DataTypes.STRING(255),
         allowNull: false,
         comment: "userName field",
+        unique: "userName",
     },
     biologicalSex: {
         type: DataTypes.ENUM("NOT_SET", "FEMALE", "MALE", "OTHER"),
@@ -166,6 +168,20 @@ module.exports = {
             if (!email) return false;
             const where = {
                 email: email.toLowerCase(),
+                ...(excludeId && { id: { [Op.ne]: excludeId } }),
+            };
+            const user = await this.findOne({ where });
+            return !!user;
+        };
+
+        // Static method: isUsernameTaken
+        UsersModel.isUsernameTaken = async function isUsernameTaken(
+            userName,
+            excludeId = null
+        ) {
+            if (!userName) return false;
+            const where = {
+                userName: userName,
                 ...(excludeId && { id: { [Op.ne]: excludeId } }),
             };
             const user = await this.findOne({ where });

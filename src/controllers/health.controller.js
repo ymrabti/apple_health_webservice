@@ -13,6 +13,13 @@ const {
 } = require("../utils/Apple.Convertions");
 const logger = require("../config/logger");
 const { Op } = require("sequelize");
+const fs = require("fs").promises;
+const fsSync = require("fs"); 
+const unzipper = require("unzipper");
+const { generateWorkerToken } = require("../config/passport");
+const { join } = require("path");
+const config = require("../config/config");
+const catchAsync = require("../utils/catchAsync");
 
 function getUserId(req) {
     if (req.user && req.user.id) return req.user.id;
@@ -483,12 +490,97 @@ async function getStatsSummaries(req, res, next) {
     }
 }
 
+async function importHealthData(req, res, next) {
+    const zipPath = req.file?.path;
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const userId = req.user.userId || req.user.id;
+        console.log(`📦 Processing upload for user: ${userId}`);
+
+        // Create user-specific directory
+        const uploadDir = config.persistent_Storage_Dir;
+        const userDir = join(uploadDir, userId.toString());
+        await fs.mkdir(userDir, { recursive: true });
+
+        const xmlPath = join(userDir, "export.xml");
+        let xmlFound = false;
+
+        // Extract export.xml from zip
+        await new Promise((resolve, reject) => {
+            fsSync.createReadStream(zipPath)
+                .pipe(unzipper.Parse())
+                .on("entry", (entry) => {
+                    const fileName = entry.path;
+
+                    // Look for export.xml in various locations
+                    if (fileName.endsWith("export.xml")) {
+                        console.log(`📄 Found export.xml: ${fileName}`);
+                        xmlFound = true;
+                        entry.pipe(fsSync.createWriteStream(xmlPath));
+                    } else {
+                        entry.autodrain();
+                    }
+                })
+                .on("error", reject)
+                .on("close", resolve);
+        });
+
+        if (!xmlFound) {
+            throw new Error("export.xml not found in zip file");
+        }
+
+        // Clean up zip file
+        await fs.unlink(zipPath);
+
+        // Create job file for Python worker
+        const workerToken = generateWorkerToken(userId);
+        const jobData = {
+            xml_path: `/data/uploads/${userId}/export.xml`,
+            token: workerToken,
+            user_id: userId.toString(),
+            created_at: new Date().toISOString(),
+        };
+
+        const jobPath = join(userDir, `${userId}_job.json`);
+        await fs.writeFile(jobPath, JSON.stringify(jobData, null, 2));
+
+        console.log(`✅ Created processing job for user ${userId}`);
+
+        res.json({
+            success: true,
+            message: "File uploaded and queued for processing",
+            jobId: userId.toString(),
+        });
+    } catch (error) {
+        console.error("❌ Upload error:", error);
+
+        // Clean up on error
+        if (zipPath) {
+            try {
+                await fs.unlink(zipPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+
+        res.status(500).json({
+            error: "Failed to process upload",
+            details: error.message,
+        });
+    }
+}
+
 module.exports = {
-    getUserInfos,
-    saveUserInfos,
-    getDailySummaries,
-    getStatsSummaries,
-    saveDailySummaries,
-    getActivitySummaries,
-    saveActivitySummaries,
+    getUserInfos: catchAsync(getUserInfos),
+    saveUserInfos: catchAsync(saveUserInfos),
+    importHealthData: catchAsync(importHealthData),
+    getDailySummaries: catchAsync(getDailySummaries),
+    getStatsSummaries: catchAsync(getStatsSummaries),
+    saveDailySummaries: catchAsync(saveDailySummaries),
+    getActivitySummaries: catchAsync(getActivitySummaries),
+    saveActivitySummaries: catchAsync(saveActivitySummaries),
 };
