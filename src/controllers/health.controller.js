@@ -1,4 +1,5 @@
 const httpStatus = require("http-status");
+const moment = require("moment");
 const ApiError = require("../utils/ApiError");
 const {
     dailySummariesModel,
@@ -14,12 +15,14 @@ const {
 const logger = require("../config/logger");
 const { Op } = require("sequelize");
 const fs = require("fs").promises;
-const fsSync = require("fs"); 
+const fsSync = require("fs");
 const unzipper = require("unzipper");
 const { generateWorkerToken } = require("../config/passport");
-const { join } = require("path");
+const { join, resolve } = require("path");
 const config = require("../config/config");
 const catchAsync = require("../utils/catchAsync");
+const { generateToken } = require("../services/token.service");
+const { tokenTypes } = require("../config/tokens");
 
 function getUserId(req) {
     if (req.user && req.user.id) return req.user.id;
@@ -511,7 +514,8 @@ async function importHealthData(req, res, next) {
 
         // Extract export.xml from zip
         await new Promise((resolve, reject) => {
-            fsSync.createReadStream(zipPath)
+            fsSync
+                .createReadStream(zipPath)
                 .pipe(unzipper.Parse())
                 .on("entry", (entry) => {
                     const fileName = entry.path;
@@ -537,9 +541,16 @@ async function importHealthData(req, res, next) {
         await fs.unlink(zipPath);
 
         // Create job file for Python worker
-        const workerToken = generateWorkerToken(userId);
+        const accessWorkerExpires = moment().add(2, "minutes");
+        const workerToken = generateToken(userId, accessWorkerExpires, tokenTypes.ACCESS,);
+        const exportXmlFilePath = resolve(
+            config.persistent_Storage_Dir,
+            userId,
+            "export.xml"
+        );
+        console.log(exportXmlFilePath);
         const jobData = {
-            xml_path: `/data/uploads/${userId}/export.xml`,
+            xml_path: exportXmlFilePath,
             token: workerToken,
             user_id: userId.toString(),
             created_at: new Date().toISOString(),

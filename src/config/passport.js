@@ -11,14 +11,6 @@ const cookieOptions = {
     signed: true,
 };
 
-// Generate short-lived token (5 minutes) for Python worker
-function generateWorkerToken(userId) {
-    return jwt.sign(
-        { userId, worker: true },
-        config.jwt.secret,
-        { expiresIn: '5m' }
-    );
-}
 
 const jwtOptions = {
     secretOrKey: config.jwt.secret,
@@ -61,29 +53,6 @@ const jwtVerify = async (payload, done) => {
     }
 };
 
-const qrVerify = async (payload, done) => {
-    try {
-        if (payload.type !== tokenTypes.QR) {
-            throw new Error("Invalid Qr Code");
-        }
-        const user = await usersModel.findByPk(payload.sub, {
-            attributes: [
-                "id",
-                "email",
-                "role",
-                "username",
-                "firstName",
-                "lastName",
-            ],
-        });
-        if (!user) {
-            return done(null, false, null);
-        }
-        done(null, user.dataValues, payload.qr_id);
-    } catch (error) {
-        done(error, false, null);
-    }
-};
 
 const jwtStrategy = new Strategy(jwtOptions, jwtVerify);
 const cookieStrategy = new CookieStrategy(cookieOptions, jwtVerify);
@@ -92,13 +61,10 @@ const jwtSocketHeadersStrategy = new Strategy(
     jwtSocketHeadersOptions,
     jwtVerify
 );
-const qrAuthFromBodyStrategy = new Strategy(qrBodyOptions, qrVerify);
 
 module.exports = {
     jwtStrategy,
     cookieStrategy,
     jwtSocketStrategy,
     jwtSocketHeadersStrategy,
-    qrAuthFromBodyStrategy,
-    generateWorkerToken,
 };

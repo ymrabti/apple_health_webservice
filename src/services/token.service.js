@@ -14,7 +14,6 @@ const logger = require("../config/logger");
  * @param {ObjectId} userId
  * @param {moment.Moment} expires
  * @param {string} type
- * @param {string | undefined} qr_id
  * @param {string} [secret]
  * @returns {string}
  */
@@ -22,12 +21,10 @@ const generateToken = (
     userId,
     expires,
     type,
-    qr_id,
     secret = config.jwt.secret
 ) => {
     const payload = {
         sub: userId,
-        qr_id: qr_id,
         iat: moment().unix(),
         exp: expires.unix(),
         type,

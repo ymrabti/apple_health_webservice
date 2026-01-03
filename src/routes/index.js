@@ -1,7 +1,6 @@
 const express = require('express');
 const authRoute = require('./auth.route');
 const userRoute = require('./user.route');
-const myRoute = require('./my.route');
 const docsRoute = require('./docs.route');
 const healthImportRoute = require('./health.route');
 const config = require('../config/config');
@@ -10,10 +9,6 @@ const authCombined = require('../middlewares/auth');
 const router = express.Router();
 
 const defaultRoutes = [
-    {
-        path: '/myaccount',
-        route: myRoute,
-    },
     {
         path: '/auth',
         route: authRoute,

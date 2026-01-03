@@ -60,11 +60,12 @@ services:
             DB_USER: healthy_user
             DB_PASSWORD: password
             DB_DATABASE: health_db
-        image: health_image_webservice:1.0.0
-        container_name: health_webservice
+            UPLOAD_DIR: /app/uploads
         volumes:
             - health-data:/app/uploads
             - persistent-storage:/usr/src/health
+        image: health_image_webservice:1.0.0
+        container_name: health_webservice
         depends_on:
             health_mysql:
                 condition: service_healthy

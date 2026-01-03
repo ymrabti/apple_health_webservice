@@ -59,7 +59,6 @@ app.options("*", cors(corsOptions));
 // jwt authentication
 app.use(passport.initialize());
 passport.use("jwtSocketHeaders", jwtSocketHeadersStrategy);
-passport.use("qrScannAuthBody", qrAuthFromBodyStrategy);
 passport.use("jwtSocket", jwtSocketStrategy);
 passport.use("jwt", jwtStrategy);
 passport.use("cookie", cookieStrategy);

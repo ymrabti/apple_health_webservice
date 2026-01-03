@@ -1,0 +1,24 @@
+{
+    "watch": [
+        "src",
+        "config",
+        "prisma/schema.prisma"
+    ],
+    "ext": "js,json,prisma",
+    "ignore": [
+        "src/**/*.spec.js",
+        "src/**/*.test.js",
+        "node_modules",
+        "static",
+        "logs",
+        "log",
+        "prisma/migrations",
+        ".git"
+    ],
+    "exec": "node src/index.js",
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "delay": 1000,
+    "verbose": true
+}
