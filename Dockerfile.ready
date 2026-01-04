@@ -3,8 +3,10 @@ FROM node:iron-alpine
 RUN mkdir -p /usr/src/app \
     && mkdir -p /usr/src/health/uploads/_temp_ \
     && mkdir -p /usr/src/logs \
+    && mkdir -p /usr/src/app/migrations \
     && chown -R node:node /usr/src/app \
     && chown -R node:node /usr/src/logs \
+    && chown -R node:node /usr/src/app/migrations \
     && chown -R node:node /usr/src/health
 
 
@@ -17,6 +19,7 @@ COPY ./package.json /usr/src/app/package.json
 COPY ./yarn.lock /usr/src/app/yarn.lock
 COPY ./google-services.json /usr/src/app/dist/google-services.json
 COPY ./ecosystem.config.json /usr/src/app/ecosystem.config.json
+COPY ./config /usr/src/app/config
 
 USER node
 RUN yarn install --pure-lockfile --production

@@ -31,14 +31,21 @@ COPY --chown=node:node --from=builder /usr/src/app/package.json ./
 COPY --chown=node:node --from=builder /usr/src/app/yarn.lock ./
 COPY --chown=node:node --from=builder /usr/src/app/google-services.json /usr/src/app/dist/google-services.json
 COPY --chown=node:node --from=builder /usr/src/app/ecosystem.config.json ./ecosystem.config.json
-COPY prisma ./prisma
+COPY --chown=node:node --from=builder /usr/src/app/prisma ./prisma
+COPY --chown=node:node --from=builder /usr/src/app/init-db ./init-db
+COPY --chown=node:node --from=builder /usr/src/app/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY .env.prod .env.prod
 
+# Make entrypoint executable
+USER root
+RUN chmod +x docker-entrypoint.sh
 
 USER node
 RUN yarn install --pure-lockfile --production
 
 EXPOSE 7384
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["yarn", "start"]
 
 # ssh-keygen -t rsa -b 4096

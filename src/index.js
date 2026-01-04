@@ -2,11 +2,26 @@
 const app = require("./app");
 const config = require("./config/config");
 const logger = require("./config/logger");
+const { setupDatabase } = require("./utils/database-setup");
+
 let server;
 
-server = app.httpServer.listen(config.port, () => {
-    logger.info(`Listening to port ${config.port}`);
-});
+// Setup database before starting server
+(async () => {
+    try {
+        logger.info("Starting database setup...");
+        await setupDatabase();
+        logger.info("Database setup completed successfully");
+
+        // Start server after database is ready
+        server = app.httpServer.listen(config.port, () => {
+            logger.info(`Listening to port ${config.port}`);
+        });
+    } catch (error) {
+        logger.error("Failed to setup database:", error);
+        process.exit(1);
+    }
+})();
 
 /* 
 const db = require("./models/database");

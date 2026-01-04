@@ -4,6 +4,8 @@ const controller = require("../controllers/health.controller");
 const validate = require("../middlewares/validate");
 const { healthValidation } = require("../validations");
 const multer = require("multer");
+const { resolve } = require("path");
+const config = require("../config/config");
 
 const router = express.Router();
 router.use(authCombined());
@@ -47,10 +49,10 @@ router
 
 // Configure multer for file uploads
 const upload = multer({
-    dest: '/usr/src/health/uploads/_temp_/',
+    dest: resolve(config.persistent_Storage_Dir, "uploads", "_temp_"),
     limits: {
-        fileSize: 100 * 1024 * 1024 // 100MB limit
-    }
+        fileSize: 100 * 1024 * 1024, // 100MB limit
+    },
 });
 
 router.post("/import", upload.single("file"), controller.importHealthData);

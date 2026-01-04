@@ -62,6 +62,7 @@ services:
             DB_DATABASE: health_db
         volumes:
             - persistent-storage:/usr/src/health
+            - logs-data:/usr/src/logs
         image: health_image_webservice:1.0.0
         container_name: health_webservice
         depends_on:
@@ -126,6 +127,7 @@ volumes:
     mysqldbdata:
     persistent-storage:
     phpmyadmin-data:
+    logs-data:
 
 networks:
     health-network:
