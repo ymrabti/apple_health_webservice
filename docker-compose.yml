@@ -60,9 +60,7 @@ services:
             DB_USER: healthy_user
             DB_PASSWORD: password
             DB_DATABASE: health_db
-            UPLOAD_DIR: /app/uploads
         volumes:
-            - health-data:/app/uploads
             - persistent-storage:/usr/src/health
         image: health_image_webservice:1.0.0
         container_name: health_webservice
@@ -81,11 +79,10 @@ services:
         container_name: health_python-worker
         environment:
             - BACKEND_URL=http://health_node-app:7384
-            - WATCH_DIR=/data/uploads
-            - PROCESSED_DIR=/data/processed
+            - WATCH_DIR=/usr/src/health
+            - PROCESSED_DIR=/usr/src/health/processed
         volumes:
-            - health-data:/data/uploads
-            - processed-data:/data/processed
+            - persistent-storage:/usr/src/health
         depends_on:
             - health_node-app
         networks:
@@ -129,8 +126,6 @@ volumes:
     mysqldbdata:
     persistent-storage:
     phpmyadmin-data:
-    health-data:
-    processed-data:
 
 networks:
     health-network:

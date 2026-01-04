@@ -47,7 +47,7 @@ router
 
 // Configure multer for file uploads
 const upload = multer({
-    dest: '/tmp/uploads/',
+    dest: '/usr/src/health/uploads/_temp_/',
     limits: {
         fileSize: 100 * 1024 * 1024 // 100MB limit
     }
