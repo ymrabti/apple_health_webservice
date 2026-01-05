@@ -9,39 +9,43 @@ const { Sequelize } = require("sequelize");
 const logger = require("../config/logger");
 const config = require("../config/config");
 
-console.info(config.mysql);
-// Create Sequelize instance with environment variables (Docker) or config.json (local)
-let sequelize;
-if (config.mysql.DATABASE_URL) {
-    // Use DATABASE_URL if available (Docker)
-    sequelize = new Sequelize(config.mysql.DATABASE_URL, {
-        dialect: "mysql",
-        logging: false,
-    });
-} else if (config.mysql.DB_HOST) {
-    // Use individual environment variables
-    sequelize = new Sequelize(
-        config.mysql.DB_DATABASE,
-        config.mysql.DB_USER,
-        config.mysql.DB_PASSWORD || null,
-        {
-            host: config.mysql.DB_HOST,
-            port: config.mysql.DB_PORT || 3306,
-            dialect: "mysql",
-            logging: false,
-        }
-    );
-}
 
-// Get database name for table checking
-const dbName = config.mysql.DB_DATABASE;
+const {
+    DB_HOST,
+    DB_DATABASE,
+    DB_USER,
+    DB_PORT,
+    DB_PASSWORD,
+    DATABASE_URL, //
+} = config.mysql;
+
+const sequelize = new Sequelize(DATABASE_URL || null, {
+    host: DB_HOST,
+    database: DB_DATABASE,
+    username: DB_USER,
+    port: DB_PORT,
+    password: DB_PASSWORD,
+    pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+    },
+    dialect: "mysql",
+    define: {
+        timestamps: true,
+    },
+    logging: false,
+    timezone: "+01:00",
+});
 
 /**
  * Check if database connection is available with retry logic
  */
-async function checkDatabaseConnection(retries = 5, delay = 3000) {
+async function checkDatabaseConnection(retries = 10, delay = 5000) {
     for (let i = 1; i <= retries; i++) {
         try {
+            logger.info(`→ Attempting database connection (${i}/${retries})...`);
             await sequelize.authenticate();
             logger.info("✓ Database connection established");
             return true;
@@ -57,6 +61,7 @@ async function checkDatabaseConnection(retries = 5, delay = 3000) {
         }
     }
     logger.error("✗ All database connection attempts failed");
+    logger.error("→ Please ensure MySQL container is running and accessible");
     return false;
 }
 
@@ -69,7 +74,7 @@ async function checkTablesExist() {
         const [results] = await sequelize.query(
             "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = :database AND table_name = 'users'",
             {
-                replacements: { database: dbName },
+                replacements: { database: DB_DATABASE },
                 type: Sequelize.QueryTypes.SELECT,
             }
         );
