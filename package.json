@@ -41,7 +41,8 @@
         "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up",
         "docker:down:prod": "docker-compose -f docker-compose.yml down -v",
         "docker:down:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml down -v",
-        "docker:down:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml down -v"
+        "docker:down:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml down -v",
+        "re:docker": "concurrently \"yarn docker:down:prod\" \"yarn build\" \"yarn docker:prod\""
     },
     "keywords": [
         "node",
@@ -93,7 +94,6 @@
         "pm2": "6.0.5",
         "rotating-file-stream": "^3.2.7",
         "sequelize": "^6.37.7",
-        "sequelize-cli": "6.6.3",
         "socket.io": "^4.8.1",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1",
@@ -107,6 +107,7 @@
         "xss-clean": "^0.1.1"
     },
     "devDependencies": {
+        "concurrently": "^9.2.1",
         "coveralls": "^3.0.7",
         "dotenv-cli": "^11.0.0",
         "eslint": "^9.30.1",
@@ -114,6 +115,7 @@
         "nodemon": "^2.0.0",
         "prisma": "^7.2.0",
         "sequelize-automate": "^1.2.2",
+        "sequelize-cli": "6.6.3",
         "supertest": "^6.0.1"
     },
     "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"

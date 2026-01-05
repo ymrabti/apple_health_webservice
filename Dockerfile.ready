@@ -3,10 +3,8 @@ FROM node:iron-alpine
 RUN mkdir -p /usr/src/app \
     && mkdir -p /usr/src/health/uploads/_temp_ \
     && mkdir -p /usr/src/logs \
-    && mkdir -p /usr/src/app/migrations \
     && chown -R node:node /usr/src/app \
     && chown -R node:node /usr/src/logs \
-    && chown -R node:node /usr/src/app/migrations \
     && chown -R node:node /usr/src/health
 
 
@@ -15,15 +13,17 @@ WORKDIR /usr/src/app
 COPY ./dist /usr/src/app/dist
 COPY ./.env.prod /usr/src/app/.env.prod
 COPY ./prisma /usr/src/app/prisma
+COPY ./prisma.config.ts /usr/src/app/prisma.config.ts
 COPY ./package.json /usr/src/app/package.json
 COPY ./yarn.lock /usr/src/app/yarn.lock
 COPY ./google-services.json /usr/src/app/dist/google-services.json
 COPY ./ecosystem.config.json /usr/src/app/ecosystem.config.json
-COPY ./config /usr/src/app/config
 
 USER node
 RUN yarn install --pure-lockfile --production
-    # && yarn db:prod --schema prisma/schema.prisma
+
+# Generate Prisma Client after dependencies are installed
+RUN npx prisma generate
 
 EXPOSE 7384
 CMD ["yarn", "start"]

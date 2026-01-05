@@ -43,6 +43,9 @@ RUN chmod +x docker-entrypoint.sh
 USER node
 RUN yarn install --pure-lockfile --production
 
+# Generate Prisma Client after dependencies are installed
+RUN npx prisma generate
+
 EXPOSE 7384
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
