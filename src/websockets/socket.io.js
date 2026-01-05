@@ -25,7 +25,6 @@ class MySocketIO {
             (err, user, info) => {
                 if (err || !user || info) {
                     logger.error("Authentication error => ", err || info);
-                    socket.emit(EVENTS.JWT_EXPIRED, "");
                     return;
                 }
 
@@ -58,7 +57,6 @@ class MySocketIO {
                                 "Authentication error => ",
                                 err || info
                             );
-                            socket.emit(EVENTS.JWT_EXPIRED, "");
                             return next(new Error("Unauthorized: Invalid JWT"));
                         }
 
@@ -87,14 +85,10 @@ class MySocketIO {
          */
 
         this.socket.on("connection", (socket) => {
-            this.resetTimer(socket, config.jwt.qrExpirationSeconds, true);
 
             // logger.info(JSON.stringify(socket.user, null, 4));
             socket.on(EVENTS.DISCONNECT, (reason) =>
                 this.disconnect(socket, reason)
-            );
-            socket.on(EVENTS.RESET_TIMER, () =>
-                this.resetTimer(socket, config.jwt.qrExpirationSeconds, false)
             );
             socket.on(EVENTS.CONNECT_ERROR, (err) => {
                 logger.info(`CONNECT_ERROR DUE TO ${err.message}`);
@@ -109,52 +103,11 @@ class MySocketIO {
     /**
      *
      * @param {Socket} socket msocket
-     * @param {number} newTimer msocket
-     * @param {boolean} firstTime msocket
-     * @param {string} id fallback_id
-     */
-    resetTimer(socket, newTimer, firstTime, id) {
-        const role = socket.user?.role;
-        if (!firstTime || (firstTime && role === "gate")) {
-            if (this.timer != null) clearInterval(this.timer);
-            this.handleQr(socket, id);
-            this.timer = setInterval(() => {
-                this.handleQr(socket, id);
-            }, (newTimer ?? 15) * 1000);
-        }
-    }
-
-    /**
-     *
-     * @param {Socket} socket msocket
      * @param {any} reason msocket
      */
     disconnect(socket, reason) {
         logger.info(`CLIENT DISCONNECTED WITH A REASON: ${reason}`);
         socket.broadcast.emit(EVENTS.USER_LEAVE, null);
-    }
-
-    /**
-     *
-     * @param {Socket} msocket msocket
-     * @param {string} id fallback_id
-     */
-    handleQr(msocket, id) {
-        const qrExpires = moment().add(
-            config.jwt.qrExpirationSeconds,
-            "seconds"
-        );
-        const qr_new = generateToken(
-            msocket.user?.id ?? id,
-            qrExpires,
-            tokenTypes.QR,
-            v4()
-        );
-        msocket.emit(EVENTS.QR_STREAM, {
-            qr: qr_new,
-            generated: new Date().toISOString(),
-            lifecyle_in_seconds: config.jwt.qrExpirationSeconds,
-        });
     }
 }
 

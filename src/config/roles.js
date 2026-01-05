@@ -1,6 +1,5 @@
 const allCapabilities = {
     showQr: "showQr",
-    resetTimer: "resetTimer",
     listtUsers: "getUsers",
     manageUsers: "manageUsers",
 };
@@ -8,11 +7,10 @@ const allCapabilities = {
 const allRoles = {
     user: [],
     gate: [allCapabilities.showQr],
-    manager: [allCapabilities.listtUsers, allCapabilities.resetTimer],
+    manager: [allCapabilities.listtUsers],
     admin: [
         allCapabilities.manageUsers,
         allCapabilities.listtUsers,
-        allCapabilities.resetTimer,
     ],
 };
 

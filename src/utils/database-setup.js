@@ -117,9 +117,7 @@ const migrations = [
         fitzpatrickSkinType ENUM('NOT_SET', 'TYPE_I', 'TYPE_II', 'TYPE_III', 'TYPE_IV', 'TYPE_V', 'TYPE_VI') DEFAULT 'NOT_SET',
         cardioFitnessMedicationsUse ENUM('NOT_SET', 'NONE', 'BETA_BLOCKERS', 'CALCIUM_CHANNEL_BLOCKERS', 'COMBINATION') DEFAULT 'NOT_SET',
         weightInKilograms DECIMAL(5, 2) DEFAULT NULL,
-        heightInCentimeters DECIMAL(5, 2) DEFAULT NULL,
-        INDEX idx_userName (userName),
-        INDEX idx_email (email)
+        heightInCentimeters DECIMAL(5, 2) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
     // Create tokens table
@@ -133,7 +131,7 @@ const migrations = [
         createdAt DATETIME DEFAULT NULL,
         updatedAt DATETIME DEFAULT NULL,
         INDEX idx_userId (userId),
-        INDEX idx_token (token)
+        CONSTRAINT fk_tokens_userId FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
     // Create daily_summaries table
@@ -152,7 +150,7 @@ const migrations = [
         updatedAt DATETIME DEFAULT NULL,
         UNIQUE KEY unique_userId_date (userId, date),
         INDEX idx_userId (userId),
-        INDEX idx_date (date)
+        CONSTRAINT fk_daily_summaries_userId FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
     // Create activity_summaries table
@@ -173,7 +171,8 @@ const migrations = [
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT NULL,
         UNIQUE KEY user_datecomponents_unique (userId, dateComponents),
-        INDEX idx_userId_exportDate (userId, exportDate)
+        INDEX idx_userId_exportDate (userId, exportDate),
+        CONSTRAINT fk_activity_summaries_userId FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
 

@@ -24,10 +24,7 @@ const jwtSocketHeadersOptions = {
     secretOrKey: config.jwt.secret,
     jwtFromRequest: ExtractJwt.fromUrlQueryParameter("token"),
 };
-const qrBodyOptions = {
-    secretOrKey: config.jwt.secret,
-    jwtFromRequest: ExtractJwt.fromBodyField("Qr"),
-};
+
 
 const jwtVerify = async (payload, done) => {
     try {

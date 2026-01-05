@@ -80,7 +80,7 @@ const generateSwaggerSpec = () => {
 const socketServer = new Server(httpServer, {
     cors: corsOptions,
 });
-const socket = socketServer.of("/apple_health/");
+const socket = socketServer.of("/api/apple_health/");
 const chatObject = new MySocketIO(socket);
 
 // ! // // // // // //  SOCKET // // // // // // //
