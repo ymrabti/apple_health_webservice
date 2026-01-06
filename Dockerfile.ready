@@ -3,8 +3,10 @@ FROM node:iron-alpine
 RUN mkdir -p /usr/src/app \
     && mkdir -p /usr/src/health/uploads/_temp_ \
     && mkdir -p /usr/src/logs \
+    && mkdir -p /usr/src/health/health_imports \
     && chown -R node:node /usr/src/app \
     && chown -R node:node /usr/src/logs \
+    && chown -R node:node /usr/src/health/health_imports \
     && chown -R node:node /usr/src/health
 
 

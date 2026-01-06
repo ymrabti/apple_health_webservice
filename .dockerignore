@@ -5,4 +5,5 @@ npm-debug.log
 Dockerfile
 Dockerfile.ready
 .dockerignore
+static/
 *.md
