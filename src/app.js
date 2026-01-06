@@ -83,6 +83,12 @@ const socketServer = new Server(httpServer, {
 const socket = socketServer.of("/api/apple_health/");
 const chatObject = new MySocketIO(socket);
 
+app.set("socketio", socket);
+
+/* socket.use(async (socket, next) => {
+    await chatObject.authAppCheck(socket, next);
+}); */
+
 // ! // // // // // //  SOCKET // // // // // // //
 if (config.env !== "test") {
     app.use(morgan.successHandler);

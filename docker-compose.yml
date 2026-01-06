@@ -80,7 +80,7 @@ services:
         container_name: health_python-worker
         environment:
             - BACKEND_URL=http://health_node-app:7384
-            - WATCH_DIR=/usr/src/health
+            - WATCH_DIR=/usr/src/health/health_imports
             - PROCESSED_DIR=/usr/src/health/processed
         volumes:
             - persistent-storage:/usr/src/health

@@ -1,5 +1,6 @@
 const httpStatus = require("http-status");
 const moment = require("moment");
+const { Namespace, Socket } = require("socket.io");
 const ApiError = require("../utils/ApiError");
 const {
     dailySummariesModel,
@@ -143,7 +144,22 @@ function healthScoreToGrade(score) {
     return "F";
 }
 
-// 1) Save user infos (Me.attributes) marked by exportDate
+/**
+ * Get Socket.IO instance from request
+ * @param {import('express').Request} req request
+ * @returns {Socket} socket.io instance
+ */
+function getSocketIO(req) {
+    return req.app.get("socketio");
+}
+
+/**
+ * Save user infos (Me.attributes) marked by exportDate
+ * @param {import('express').Request} req request
+ * @param {import('express').Response} res response
+ * @param {import('express').NextFunction} next next middleware
+ * @returns
+ */
 async function saveUserInfos(req, res, next) {
     try {
         const userId = getUserId(req);
@@ -205,6 +221,9 @@ async function saveUserInfos(req, res, next) {
                 old: existing.cardioFitnessMedicationsUse,
                 new: cardioFitnessMedicationsUse,
             };
+
+        const io = getSocketIO(req);
+        io.to(userId).emit("import_success");
         return res.status(httpStatus.OK).json({ ok: true, diff });
     } catch (err) {
         console.error(err);
@@ -506,7 +525,7 @@ async function importHealthData(req, res, next) {
 
         // Create user-specific directory
         const uploadDir = config.persistent_Storage_Dir;
-        const userDir = join(uploadDir, userId.toString());
+        const userDir = join(uploadDir, "health_imports", userId.toString());
         await fs.mkdir(userDir, { recursive: true });
 
         const xmlPath = join(userDir, "export.xml");
@@ -542,13 +561,17 @@ async function importHealthData(req, res, next) {
 
         // Create job file for Python worker
         const accessWorkerExpires = moment().add(2, "minutes");
-        const workerToken = generateToken(userId, accessWorkerExpires, tokenTypes.ACCESS,);
+        const workerToken = generateToken(
+            userId,
+            accessWorkerExpires,
+            tokenTypes.ACCESS
+        );
         const exportXmlFilePath = resolve(
             config.persistent_Storage_Dir,
-            userId,
+            "health_imports",
+            userId.toString(),
             "export.xml"
         );
-        console.log(exportXmlFilePath);
         const jobData = {
             xml_path: exportXmlFilePath,
             token: workerToken,

@@ -79,35 +79,26 @@ class MySocketIO {
     constructor(sock) {
         this.socket = sock;
         this.socket.use(this.authSocket);
-        /**
-         *
-         * @param {Socket} socket msocket
-         */
+        this.onConnection = this.onConnected.bind(this);
+        this.socket.on("connection", this.onConnected);
+    }
+    
+    /**
+     * @param {Socket} socket msocket
+     */
+    onConnected(socket) {
+        socket.on(EVENTS.DISCONNECT, (reason) =>
+            logger.info(`Client DISCONNECTED ${socket.id} due to ${reason}`)
+        );
+        socket.on(EVENTS.CONNECT_ERROR, (err) => {
+            logger.info(`CONNECT_ERROR DUE TO ${err.message}`);
+        });
 
-        this.socket.on("connection", (socket) => {
+        socket.join(socket.user.id);
 
-            // logger.info(JSON.stringify(socket.user, null, 4));
-            socket.on(EVENTS.DISCONNECT, (reason) =>
-                this.disconnect(socket, reason)
-            );
-            socket.on(EVENTS.CONNECT_ERROR, (err) => {
-                logger.info(`CONNECT_ERROR DUE TO ${err.message}`);
-            });
-
-            logger.info(`NEW CLIENT CONNECTED ${socket.id}, 
+        logger.info(`NEW CLIENT CONNECTED ${socket.id}, 
             ID: ${socket.user.id}
             Role = ${socket.user.role}`);
-        });
-    }
-
-    /**
-     *
-     * @param {Socket} socket msocket
-     * @param {any} reason msocket
-     */
-    disconnect(socket, reason) {
-        logger.info(`CLIENT DISCONNECTED WITH A REASON: ${reason}`);
-        socket.broadcast.emit(EVENTS.USER_LEAVE, null);
     }
 }
 
