@@ -250,6 +250,7 @@ async function getUserInfos(req, res, next) {
             cardioFitnessMedicationsUse: user.cardioFitnessMedicationsUse,
             isEmailVerified: user.isEmailVerified,
             userName: user.userName,
+            photo: user.photo,
             weightInKilograms: user.weightInKilograms,
             heightInCentimeters: user.heightInCentimeters,
             email: user.email,
