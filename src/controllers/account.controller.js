@@ -41,29 +41,19 @@ async function getUserPhoto(req, res) {
  * @param {express.Response} res Response
  */
 async function updateProfilePicture(req, res) {
+    if (!req.file) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "No file uploaded");
+    }
+
     const userName = req.user?.userName;
     const user = await userService.getUserByUsernameOrEmail(userName);
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
     }
 
-    await userService.updateUserById(user.id, { photo: req.file.filename });
+    const updatedUser = await userService.updateUserById(user.id, { photo: req.file.filename });
 
-    if (!req.file) {
-        res.status(httpStatus.BAD_REQUEST).json({
-            message: "No file uploaded",
-        });
-    }
-    try {
-        res.status(httpStatus.OK).json({
-            message: "File uploaded successfully",
-            file: req.file,
-        });
-    } catch (err) {
-        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-            error: err.message,
-        });
-    }
+    res.status(httpStatus.OK).json(updatedUser);
 }
 
 
