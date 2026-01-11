@@ -19,25 +19,28 @@ router.post(
     validate(authValidation.refreshTokens),
     authController.refreshTokens
 );
+
+// Change password (authenticated)
 router.post(
     "/change-password",
     validate(authValidation.changePassword),
     auth(),
     authController.changePassword
 );
-//
+
+// Forgot password and reset password
 router.post(
-    "/send-reset-password-otp",
+    "/send-reset-password-email",
     validate(authValidation.forgotPassword),
-    authController.sendOTP
+    authController.sendResetPasswordEmail
 );
-//
 router.post(
     "/reset-password",
     validate(authValidation.resetPassword),
     authController.resetPassword
 );
-//
+
+// Email verification
 router.post(
     "/send-verification-email",
     auth(),

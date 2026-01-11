@@ -72,7 +72,7 @@ const refreshTokens = async (req, res) => {
  * @param {express.Request} req request
  * @param {express.Response} res response
  */
-const sendOTP = async (req, res) => {
+const sendResetPasswordEmail = async (req, res) => {
     var user = await userService.getUserByUsernameOrEmail(req.body.userName, req.body.email);
     const resetPasswordToken = await tokenService.generateResetPasswordToken(
         user.email
@@ -154,7 +154,7 @@ module.exports = {
     login: catchAsync(login),
     logout: catchAsync(logout),
     refreshTokens: catchAsync(refreshTokens),
-    sendOTP: catchAsync(sendOTP),
+    sendResetPasswordEmail: catchAsync(sendResetPasswordEmail),
     resetPassword: catchAsync(resetPassword),
     changePassword: catchAsync(changePassword),
     sendVerificationEmail: catchAsync(sendVerificationEmail),

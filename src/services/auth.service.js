@@ -55,7 +55,7 @@ const refreshAuth = async (refreshToken) => {
         );
         const user = await userService.getUserById(refreshTokenDoc.userId);
         if (!user) {
-            throw new Error();
+            throw new Error("User not found");
         }
         await refreshTokenDoc.destroy();
         const tokens = await tokenService.generateAuthTokens(user);
@@ -78,13 +78,14 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
             resetPasswordToken,
             tokenTypes.RESET_PASSWORD
         );
-        const user = await userService.getUserById(resetPasswordTokenDoc.user);
+        const user = await userService.getUserById(resetPasswordTokenDoc.userId);
         if (!user) {
-            throw new Error();
+            throw new Error("User not found");
         }
         await userService.updateUserById(user.id, { password: newPassword });
         await resetPasswordTokenDoc.destroy();
     } catch (error) {
+        console.warn(error);
         throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed");
     }
 };

@@ -75,12 +75,8 @@ const resetPassword = {
     }),
     body: Joi.object()
         .keys({
-            oldPassword: Joi.string().required().custom(password),
+            password: Joi.string().required().custom(password),
         })
-        .custom((value, helpers) => {
-            // Assign oldPassword to password
-            return { ...value, password: value.oldPassword };
-        }),
 };
 
 const verifyEmail = {
