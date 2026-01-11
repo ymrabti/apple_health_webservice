@@ -6,4 +6,5 @@ Dockerfile
 Dockerfile.ready
 .dockerignore
 static/
+data/
 *.md

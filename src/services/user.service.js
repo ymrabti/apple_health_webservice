@@ -7,6 +7,37 @@ const { Op } = require("sequelize");
 const dayjs = require("dayjs");
 
 /**
+ * Capitalize first letter of a string
+ * @param {string} str str
+ * @returns {string} return
+ */
+const cap = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+/**
+ * Generate a default password based on user details
+ * @param {Object} param0
+ * @param {string} param0.userName
+ * @param {string} param0.firstName
+ * @param {string} param0.lastName
+ * @param {string} param0.email
+ * @returns {string} Generated password
+ */
+function generateDefaultPassword({ userName, firstName, lastName, email }) {
+    const getEmailDomain = (email) => {
+        const domain = email.split("@")[1];
+        return domain ? domain.split(".")[0] : "mail";
+    };
+
+    const part1 = cap(firstName).slice(0, 2); // e.g., "Jo"
+    const part2 = lastName.slice(-2).toLowerCase(); // e.g., "ez"
+    const part3 = userName.slice(0, 3); // e.g., "jdo"
+    const part4 = `${getEmailDomain(email)}`.toUpperCase(); // e.g., "gmail"
+    const now = new Date();
+    const random = `${now.getDate()}@${now.getMonth()}`; // 2-digit number
+    const pw = `${part1}${part2}${part3}_${part4}${random}`;
+    return pw;
+}
+
+/**
  * Create a user
  * @param {Object} userBody
  * @returns {Promise<usersModel>}
@@ -77,7 +108,7 @@ const getUserByEmail = async (email) => {
 const updateUserById = async (userId, updateBody) => {
     const user = await getUserById(userId);
     if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, "usersModel not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "user not found");
     }
     if (
         updateBody.email &&
@@ -208,13 +239,14 @@ const myTodayChecks = async (userId, isGate) => {
 };
 
 module.exports = {
-    countChecks,
-    createUser,
-    queryUsers,
-    getUserById,
-    getUserByEmail,
-    getUserByUsernameOrEmail,
-    updateUserById,
-    deleteUserById,
-    myTodayChecks,
+    countChecks: countChecks,
+    createUser: createUser,
+    queryUsers: queryUsers,
+    getUserById: getUserById,
+    getUserByEmail: getUserByEmail,
+    getUserByUsernameOrEmail: getUserByUsernameOrEmail,
+    updateUserById: updateUserById,
+    deleteUserById: deleteUserById,
+    myTodayChecks: myTodayChecks,
+    generateDefaultPassword: generateDefaultPassword,
 };

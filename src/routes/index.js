@@ -21,6 +21,10 @@ const defaultRoutes = [
         path: '/apple-health',
         route: healthImportRoute,
     },
+    {
+        path: '/account',
+        route: require('./account.route'),
+    }
 ];
 
 const devRoutes = [

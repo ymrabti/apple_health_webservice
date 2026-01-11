@@ -36,7 +36,7 @@ const jwtVerify = async (payload, done) => {
                 "id",
                 "email",
                 "role",
-                "username",
+                "userName",
                 "firstName",
                 "lastName",
             ],

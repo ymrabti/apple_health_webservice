@@ -7,8 +7,10 @@ dotenv.config({ path: path.join(__dirname, "../../.env") });
 const envVarsSchema = Joi.object()
     .keys({
         LOGS_DIR: Joi.string().default("logs"),
-        PERSISTENT_STORAGE_DIR: Joi.string().default("static"),
-        GOOGLE_APPLICATION_CREDENTIALS: Joi.string().default("google-services.json"),
+        PERSISTENT_STORAGE_DIR: Joi.string().default("data"),
+        GOOGLE_APPLICATION_CREDENTIALS: Joi.string().default(
+            "google-services.json"
+        ),
         NODE_ENV: Joi.string()
             .valid("production", "development", "test")
             .required(),
@@ -32,13 +34,19 @@ const envVarsSchema = Joi.object()
         JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: Joi.number()
             .default(10)
             .description("minutes after which verify email token expires"),
-        SMTP_HOST: Joi.string().description("server that will send the emails"),
-        SMTP_PORT: Joi.number().description(
-            "port to connect to the email server"
-        ),
-        SMTP_USERNAME: Joi.string().description("username for email server"),
-        SMTP_PASSWORD: Joi.string().description("password for email server"),
-        SMTP_FROM: Joi.string().description("from email server"),
+        SMTP_HOST: Joi.string()
+            .description("server that will send the emails")
+            .required(),
+        SMTP_PORT: Joi.number()
+            .description("port to connect to the email server")
+            .required(),
+        SMTP_USERNAME: Joi.string()
+            .description("username for email server")
+            .required(),
+        SMTP_PASSWORD: Joi.string()
+            .description("password for email server")
+            .required(),
+        SMTP_FROM: Joi.string().description("from email server").required(),
     })
     .unknown();
 

@@ -83,12 +83,7 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
             throw new Error();
         }
         await userService.updateUserById(user.id, { password: newPassword });
-        await tokenModel.destroy({
-            where: {
-                user: user.id,
-                type: tokenTypes.RESET_PASSWORD,
-            },
-        });
+        await resetPasswordTokenDoc.destroy();
     } catch (error) {
         throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed");
     }
@@ -105,18 +100,15 @@ const verifyEmail = async (verifyEmailToken) => {
             verifyEmailToken,
             tokenTypes.VERIFY_EMAIL
         );
-        const user = await userService.getUserById(verifyEmailTokenDoc.user);
+        console.log(verifyEmailTokenDoc.userId);
+        const user = await userService.getUserById(verifyEmailTokenDoc.userId);
         if (!user) {
-            throw new Error();
+            throw new Error("User not found");
         }
-        await tokenModel.destroy({
-            where: {
-                user: user.id,
-                type: tokenTypes.VERIFY_EMAIL,
-            },
-        });
+        await verifyEmailTokenDoc.destroy();
         await userService.updateUserById(user.id, { isEmailVerified: true });
     } catch (error) {
+        console.warn(error.message);
         throw new ApiError(
             httpStatus.UNAUTHORIZED,
             "Email verification failed"
@@ -125,9 +117,9 @@ const verifyEmail = async (verifyEmailToken) => {
 };
 
 module.exports = {
-    loginUserWithEmailAndPassword,
-    logout,
-    refreshAuth,
-    resetPassword,
-    verifyEmail,
+    logout: logout,
+    verifyEmail: verifyEmail,
+    refreshAuth: refreshAuth,
+    resetPassword: resetPassword,
+    loginUserWithEmailAndPassword: loginUserWithEmailAndPassword,
 };

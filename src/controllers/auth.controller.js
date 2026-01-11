@@ -2,7 +2,7 @@ const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const express = require("express");
 const moment = require("moment");
-const { authService, userService, tokenService } = require("../services");
+const { authService, userService, tokenService, emailService } = require("../services");
 const config = require("../config/config");
 const pick = require("../utils/pick");
 const { tokenTypes } = require("../config/tokens");
@@ -101,6 +101,7 @@ const sendVerificationEmail = async (req, res) => {
     const verifyEmailToken = await tokenService.generateVerifyEmailToken(
         req.user
     );
+    await emailService.sendVerificationEmail(req.user.email, verifyEmailToken, req.get("origin"));
     res.status(httpStatus.NO_CONTENT).send();
 };
 

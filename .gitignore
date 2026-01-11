@@ -1,7 +1,7 @@
 # Dependencies
 node_modules
-static/*
 aws
+data
 # yarn error logs
 yarn-error.log
 
@@ -13,7 +13,6 @@ dist
 # Prisma migrations
 prisma/migrations/*
 !prisma/migrations/migration_lock.toml
-!static/favicon.ico
 # Code coverage
 coverage
 google-services.json
