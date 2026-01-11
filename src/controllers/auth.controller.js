@@ -73,9 +73,14 @@ const refreshTokens = async (req, res) => {
  * @param {express.Response} res response
  */
 const sendOTP = async (req, res) => {
-    var user = await userService.getUserByUsernameOrEmail(req.body.userName);
+    var user = await userService.getUserByUsernameOrEmail(req.body.userName, req.body.email);
     const resetPasswordToken = await tokenService.generateResetPasswordToken(
         user.email
+    );
+    await emailService.sendResetPasswordEmail(
+        user.email,
+        resetPasswordToken,
+        req.get("origin")
     );
     res.status(httpStatus.NO_CONTENT).send();
 };

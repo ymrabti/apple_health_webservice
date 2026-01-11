@@ -90,12 +90,12 @@ const verifyEmail = {
 };
 
 module.exports = {
-    register,
-    login,
-    logout,
-    refreshTokens,
-    changePassword,
-    forgotPassword,
-    resetPassword,
-    verifyEmail,
+    register: register,
+    login: login,
+    logout: logout,
+    refreshTokens: refreshTokens,
+    changePassword: changePassword,
+    forgotPassword: forgotPassword,
+    resetPassword: resetPassword,
+    verifyEmail: verifyEmail,
 };

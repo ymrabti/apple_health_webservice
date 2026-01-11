@@ -86,7 +86,11 @@ const getUserByUsernameOrEmail = async (userName, email) => {
     const usr =
         userName != null
             ? await usersModel.findOne({ where: { userName: userName } })
-            : await usersModel.findOne({ where: { email: email } });
+            : await usersModel.findOne({
+                  where: {
+                      email: email,
+                  },
+              });
     return usr;
 };
 
