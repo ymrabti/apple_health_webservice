@@ -7,6 +7,7 @@ const ApiError = require("../utils/ApiError");
 const catchAsync = require("../utils/catchAsync");
 const { userService } = require("../services");
 const { uploadService } = require("../services");
+const logger = require("../config/logger");
 
 /**
  * Check User
@@ -26,6 +27,7 @@ async function getUserPhoto(req, res) {
         user.photo
     );
     if(!fs.existsSync(profilePicture)){
+        logger.error(`Profile picture not found at path: ${profilePicture}`);
         throw new ApiError(httpStatus.NOT_FOUND, "Profile picture not found");
     }
     const filename = user.photo;

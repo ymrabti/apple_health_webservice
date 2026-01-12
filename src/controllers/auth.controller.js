@@ -26,6 +26,7 @@ const register = async (req, res) => {
     const user = await userService.createUser({
         ...req.body,
     });
+    logger.info(`User registered with ID: ${JSON.stringify(user)}`);
     const tokens = await tokenService.generateAuthTokens(user);
     const userPayload = pick(user, ["id", "firstName", "lastName", "role"]);
     setCookie(res, userPayload);

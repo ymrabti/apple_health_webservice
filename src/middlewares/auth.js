@@ -57,12 +57,10 @@ const authCombined =
             return next(); // JWT succeeded
         } catch (errJwt) {
             try {
-                logger.info("JWT auth failed, trying cookie auth");
                 await tryAuth("cookie");
-                return next(); // Cookie succeeded
+                return next();
             } catch (errCookie) {
-                logger.info("Cookie auth failed");
-                return next(errCookie || errJwt); // Both failed, return the last error
+                return next(errCookie || errJwt);
             }
         }
     };
