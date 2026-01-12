@@ -59,7 +59,12 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
     try {
         await authService.logout(req.body.refreshToken);
-        res.clearCookie(config.cookie.access_token_name, { signed: true });
+        res.clearCookie(config.cookie.access_token_name, {
+            httpOnly: true,
+            secure: config.env === "production",
+            sameSite: "lax",
+            signed: true,
+        });
         res.status(httpStatus.NO_CONTENT).send();
     } catch (error) {
         logger.error("Logout error:", error);
@@ -155,9 +160,18 @@ const verifyEmail = async (req, res) => {
  * @param {express.Response} res response
  */
 function setCookie(res, userPayload) {
+    const expires = moment().add(
+        config.jwt.accessExpirationMinutes,
+        "minutes"
+    );
+    const accessToken = tokenService.generateToken(
+        userPayload.id,
+        expires,
+        tokenTypes.ACCESS
+    );
     res.cookie(
         config.cookie.access_token_name,
-        { ...userPayload, sub: userPayload.id, type: tokenTypes.ACCESS },
+        accessToken,
         {
             maxAge: config.jwt.accessExpirationMinutes * 60000,
             httpOnly: true,
