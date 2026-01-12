@@ -2,6 +2,7 @@ const passport = require("passport");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
 const { roleRights } = require("../config/roles");
+const logger = require("../config/logger");
 
 const verifyCallback =
     (req, resolve, reject, requiredRights) => async (err, user, info) => {
@@ -56,9 +57,11 @@ const authCombined =
             return next(); // JWT succeeded
         } catch (errJwt) {
             try {
+                logger.info("JWT auth failed, trying cookie auth");
                 await tryAuth("cookie");
                 return next(); // Cookie succeeded
             } catch (errCookie) {
+                logger.info("Cookie auth failed");
                 return next(errCookie || errJwt); // Both failed, return the last error
             }
         }

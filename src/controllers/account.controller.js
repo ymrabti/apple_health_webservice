@@ -25,6 +25,9 @@ async function getUserPhoto(req, res) {
         user.userName,
         user.photo
     );
+    if(!fs.existsSync(profilePicture)){
+        throw new ApiError(httpStatus.NOT_FOUND, "Profile picture not found");
+    }
     const filename = user.photo;
     const fileSize = fs.statSync(profilePicture).size;
     res.setHeader(

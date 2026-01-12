@@ -199,7 +199,7 @@ async function saveUserInfos(req, res, next) {
             },
             { where: { id: existing.id } }
         );
-        let diff = {};
+        const diff = {};
         if (existing.dateOfBirth !== dateOfBirth)
             diff.dateOfBirth = { old: existing.dateOfBirth, new: dateOfBirth };
         if (existing.biologicalSex !== biologicalSex)
@@ -226,7 +226,7 @@ async function saveUserInfos(req, res, next) {
         io.to(userId).emit("import_success");
         return res.status(httpStatus.OK).json({ ok: true, diff });
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         next(err);
     }
 }
@@ -522,7 +522,7 @@ async function importHealthData(req, res, next) {
         }
 
         const userId = req.user.userId || req.user.id;
-        console.log(`📦 Processing upload for user: ${userId}`);
+        logger.info(`📦 Processing upload for user: ${userId}`);
 
         // Create user-specific directory
         const uploadDir = config.persistent_Storage_Dir;
@@ -542,7 +542,7 @@ async function importHealthData(req, res, next) {
 
                     // Look for export.xml in various locations
                     if (fileName.endsWith("export.xml")) {
-                        console.log(`📄 Found export.xml: ${fileName}`);
+                        logger.info(`📄 Found export.xml: ${fileName}`);
                         xmlFound = true;
                         entry.pipe(fsSync.createWriteStream(xmlPath));
                     } else {
@@ -583,7 +583,7 @@ async function importHealthData(req, res, next) {
         const jobPath = join(userDir, `${userId}_job.json`);
         await fs.writeFile(jobPath, JSON.stringify(jobData, null, 2));
 
-        console.log(`✅ Created processing job for user ${userId}`);
+        logger.info(`✅ Created processing job for user ${userId}`);
 
         res.json({
             success: true,
@@ -591,7 +591,7 @@ async function importHealthData(req, res, next) {
             jobId: userId.toString(),
         });
     } catch (error) {
-        console.error("❌ Upload error:", error);
+        logger.error("❌ Upload error:", error);
 
         // Clean up on error
         if (zipPath) {

@@ -9,6 +9,7 @@ const { Request, Response, NextFunction } = require('express');
 const { resolve, join } = require('path');
 const { uploadService } = require('../services');
 const { makeIfNorExists } = require('../services/upload.service');
+const logger = require('../config/logger');
 
 /**
  * 
@@ -63,7 +64,7 @@ async function registerMiddleware(req, res, next, validator) {
             .validate(object);
 
         if (error) {
-            console.log(error);
+            logger.error(error);
             const errorMessage = error.details.map((details) => details.message).join(', ');
             return next(new ApiError(httpStatus.BAD_REQUEST, errorMessage));
         }
@@ -75,16 +76,16 @@ async function registerMiddleware(req, res, next, validator) {
             tmpPath,
             newPath, (err) => {
                 if (err) {
-                    console.error('Error moving file:', err);
+                    logger.error('Error moving file:', err);
                 } else {
-                    // console.log('File moved successfully!');
+                    // log('File moved successfully!');
                 }
             });
         Object.assign(req, value);
         req.file = files
         next();
     } catch (err) {
-        console.log(err);
+        logger.error(err);
         next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error processing form data'));
     }
 };

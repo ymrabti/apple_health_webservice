@@ -6,6 +6,7 @@ const userService = require("./user.service");
 const ApiError = require("../utils/ApiError");
 const { tokenTypes } = require("../config/tokens");
 const { usersModel, tokenModel } = require("../models/database");
+const logger = require("../config/logger");
 
 /**
  * Login with userName and password
@@ -30,7 +31,7 @@ const loginUserWithEmailAndPassword = async (email, userName, password) => {
  * @returns {Promise}
  */
 const logout = async (refreshToken) => {
-    const refreshTokenDoc = await usersModel.findOne({
+    const refreshTokenDoc = await tokenModel.findOne({
         where: {
             token: refreshToken,
             type: tokenTypes.REFRESH,
@@ -38,7 +39,7 @@ const logout = async (refreshToken) => {
         },
     });
     if (refreshTokenDoc) {
-        await refreshTokenDoc.remove();
+        await refreshTokenDoc.destroy();
     }
 };
 
@@ -61,7 +62,7 @@ const refreshAuth = async (refreshToken) => {
         const tokens = await tokenService.generateAuthTokens(user);
         return { tokens, user };
     } catch (error) {
-        console.warn(error);
+        logger.error(error);
         throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
     }
 };
@@ -78,14 +79,16 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
             resetPasswordToken,
             tokenTypes.RESET_PASSWORD
         );
-        const user = await userService.getUserById(resetPasswordTokenDoc.userId);
+        const user = await userService.getUserById(
+            resetPasswordTokenDoc.userId
+        );
         if (!user) {
             throw new Error("User not found");
         }
         await userService.updateUserById(user.id, { password: newPassword });
         await resetPasswordTokenDoc.destroy();
     } catch (error) {
-        console.warn(error);
+        logger.error(error);
         throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed");
     }
 };
@@ -101,7 +104,6 @@ const verifyEmail = async (verifyEmailToken) => {
             verifyEmailToken,
             tokenTypes.VERIFY_EMAIL
         );
-        console.log(verifyEmailTokenDoc.userId);
         const user = await userService.getUserById(verifyEmailTokenDoc.userId);
         if (!user) {
             throw new Error("User not found");
@@ -109,7 +111,7 @@ const verifyEmail = async (verifyEmailToken) => {
         await verifyEmailTokenDoc.destroy();
         await userService.updateUserById(user.id, { isEmailVerified: true });
     } catch (error) {
-        console.warn(error.message);
+        logger.error(error.message);
         throw new ApiError(
             httpStatus.UNAUTHORIZED,
             "Email verification failed"

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const Automate = require("sequelize-automate");
 
 const automate = new Automate(

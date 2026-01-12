@@ -4,6 +4,7 @@ const config = require("../config/config");
 const { Socket } = require("socket.io");
 const { resolve } = require("path");
 const httpStatus = require("http-status");
+const logger = require("../config/logger");
 
 const servicesFilePath = resolve(config.google_Application_Credentials);
 
@@ -32,7 +33,7 @@ const firebaseAppcheck = async (req, res, next) => {
         await admin.appCheck().verifyToken(appCheckToken);
         next();
     } catch (err) {
-        console.log(err);
+        logger.error(err);
         return res
             .status(httpStatus.FORBIDDEN)
             .json({ error: "Invalid App Check token" });
@@ -48,7 +49,7 @@ const firebaseAppcheckSocket = async (socket, next) => {
     const appCheckToken = socket.handshake.headers["x-firebase-appcheck"];
 
     if (!appCheckToken) {
-        console.log("Missing App Check token");
+        logger.error("Missing App Check token");
         return next(new Error("Unauthorized: Missing App Check token"));
     }
 
@@ -56,7 +57,7 @@ const firebaseAppcheckSocket = async (socket, next) => {
         await admin.appCheck().verifyToken(appCheckToken);
         return next();
     } catch (err) {
-        console.log("Invalid App Check token", err);
+        logger.error("Invalid App Check token", err);
         return next(new Error("Unauthorized: Invalid App Check token"));
     }
 };
@@ -69,10 +70,10 @@ const firebaseAppcheckSocket = async (socket, next) => {
 async function sendNotification(message) {
     try {
         const response = await admin.messaging().send(message);
-        console.log("Successfully sent message:", response);
+        logger.info("Successfully sent message:", response);
         return true;
     } catch (error) {
-        console.error("Error sending message:", error);
+        logger.error("Error sending message:", error);
         return false;
     }
 }

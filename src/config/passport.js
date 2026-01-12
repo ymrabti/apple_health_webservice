@@ -4,6 +4,7 @@ const { tokenTypes } = require("./tokens");
 const jwt = require("jsonwebtoken");
 const { Strategy: CookieStrategy } = require("passport-cookie");
 const { usersModel } = require("../models/database");
+const logger = require("./logger");
 
 const cookieOptions = {
     cookieName: config.cookie.access_token_name,

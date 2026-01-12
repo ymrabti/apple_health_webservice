@@ -2,10 +2,16 @@ const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const express = require("express");
 const moment = require("moment");
-const { authService, userService, tokenService, emailService } = require("../services");
+const {
+    authService,
+    userService,
+    tokenService,
+    emailService,
+} = require("../services");
 const config = require("../config/config");
 const pick = require("../utils/pick");
 const { tokenTypes } = require("../config/tokens");
+const logger = require("../config/logger");
 /**
  *
  * @param {express.Request} req request
@@ -51,9 +57,14 @@ const login = async (req, res) => {
  * @param {express.Response} res response
  */
 const logout = async (req, res) => {
-    await authService.logout(req.body.refreshToken);
-    res.clearCookie(config.cookie.access_token_name, { signed: true });
-    res.status(httpStatus.NO_CONTENT).send();
+    try {
+        await authService.logout(req.body.refreshToken);
+        res.clearCookie(config.cookie.access_token_name, { signed: true });
+        res.status(httpStatus.NO_CONTENT).send();
+    } catch (error) {
+        logger.error("Logout error:", error);
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).send();
+    }
 };
 /**
  *
@@ -73,7 +84,10 @@ const refreshTokens = async (req, res) => {
  * @param {express.Response} res response
  */
 const sendResetPasswordEmail = async (req, res) => {
-    var user = await userService.getUserByUsernameOrEmail(req.body.userName, req.body.email);
+    const user = await userService.getUserByUsernameOrEmail(
+        req.body.userName,
+        req.body.email
+    );
     const resetPasswordToken = await tokenService.generateResetPasswordToken(
         user.email
     );
@@ -106,7 +120,11 @@ const sendVerificationEmail = async (req, res) => {
     const verifyEmailToken = await tokenService.generateVerifyEmailToken(
         req.user
     );
-    await emailService.sendVerificationEmail(req.user.email, verifyEmailToken, req.get("origin"));
+    await emailService.sendVerificationEmail(
+        req.user.email,
+        verifyEmailToken,
+        req.get("origin")
+    );
     res.status(httpStatus.NO_CONTENT).send();
 };
 
@@ -141,10 +159,11 @@ function setCookie(res, userPayload) {
         config.cookie.access_token_name,
         { ...userPayload, sub: userPayload.id, type: tokenTypes.ACCESS },
         {
+            maxAge: config.jwt.accessExpirationMinutes * 60000,
             httpOnly: true,
             secure: config.env === "production",
             signed: true,
-            maxAge: config.jwt.accessExpirationMinutes * 60000,
+            sameSite: "lax",
         }
     );
 }

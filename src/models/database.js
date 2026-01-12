@@ -5,6 +5,7 @@ const { tokens } = require("./tokens");
 const { health: checks } = require("./checks");
 const { dailySummaries } = require("./daily_summaries");
 const { activitySummaries } = require("./activity_summaries");
+const logger = require("../config/logger");
 
 const {
     DB_HOST,
@@ -37,10 +38,10 @@ const db = new Sequelize(DATABASE_URL || null, {
 
 db.authenticate()
     .then(() => {
-        console.log("✅ DB connected");
+        logger.info("✅ DB connected");
     })
     .catch((err) => {
-        console.log(err);
+        logger.error(err);
     });
 
 const usersModel = husers(db);
