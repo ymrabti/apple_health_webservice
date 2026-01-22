@@ -45,7 +45,7 @@ async function runTest(days) {
     const res = await fetch(url, {
         method: "GET",
         headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDUyZmQ1My02NDg5LTQ0ZTEtODgzYi0wZDQ2N2E1ODllYmMiLCJpYXQiOjE3NjkwOTkxMDgsImV4cCI6MTc2OTEwMjcwOCwidHlwZSI6ImFjY2VzcyJ9.ym_DAGW-4KIqdJs2QS1eJFdAbsVqKR1LClTa6sApOiI`,
+            Authorization: `Bearer test-user-token`,
         },
     });
 
