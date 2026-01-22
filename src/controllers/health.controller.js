@@ -30,7 +30,7 @@ function getUserId(req) {
     if (req.body && req.body.userId) return req.body.userId;
     throw new ApiError(
         httpStatus.BAD_REQUEST,
-        "Missing userId in request or auth context"
+        "Missing userId in request or auth context",
     );
 }
 
@@ -69,12 +69,12 @@ function computeHealthScore(summary) {
     const ratios = {
         energy: toRatio(
             summary.activeEnergyBurned,
-            summary.activeEnergyBurnedGoal
+            summary.activeEnergyBurnedGoal,
         ),
         moveTime: toRatio(summary.appleMoveTime, summary.appleMoveTimeGoal),
         exercise: toRatio(
             summary.appleExerciseTime,
-            summary.appleExerciseTimeGoal
+            summary.appleExerciseTimeGoal,
         ),
         stand: toRatio(summary.appleStandHours, summary.appleStandHoursGoal),
     };
@@ -111,7 +111,7 @@ function computeStepsScore(dailies) {
 function computeStreakScore(dailies) {
     if (!Array.isArray(dailies) || dailies.length === 0) return null;
     const sorted = [...dailies].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
+        (a, b) => new Date(b.date) - new Date(a.date),
     );
     let streak = 0;
     for (const row of sorted) {
@@ -179,7 +179,7 @@ async function saveUserInfos(req, res, next) {
         if (!expDate || !attributes || typeof attributes !== "object") {
             throw new ApiError(
                 httpStatus.BAD_REQUEST,
-                "Invalid payload: exportDate and attributes are required"
+                "Invalid payload: exportDate and attributes are required",
             );
         }
         const existing = await usersModel.findByPk(userId);
@@ -192,12 +192,12 @@ async function saveUserInfos(req, res, next) {
                     convertHKFitzpatrickSkinType(fitzpatrickSkinType),
                 cardioFitnessMedicationsUse:
                     convertHKCardioFitnessMedicationsUse(
-                        cardioFitnessMedicationsUse
+                        cardioFitnessMedicationsUse,
                     ),
                 weightInKilograms,
                 heightInCentimeters,
             },
-            { where: { id: existing.id } }
+            { where: { id: existing.id } },
         );
         const diff = {};
         if (existing.dateOfBirth !== dateOfBirth)
@@ -272,13 +272,13 @@ async function saveDailySummaries(req, res, next) {
         if (!userExists) {
             throw new ApiError(
                 httpStatus.BAD_REQUEST,
-                "Invalid userId: user does not exist"
+                "Invalid userId: user does not exist",
             );
         }
         if (!Array.isArray(summaries)) {
             throw new ApiError(
                 httpStatus.BAD_REQUEST,
-                "Invalid payload: summaries array required"
+                "Invalid payload: summaries array required",
             );
         }
         let upserts = 0;
@@ -310,11 +310,108 @@ async function saveDailySummaries(req, res, next) {
     }
 }
 
+function calculateItemsByDays(days) {
+    if (days <= 180) {
+        return Math.floor((45 / 180) * days);
+    }
+
+    const baseDays = 180;
+    const baseItems = 45;
+
+    return Math.floor(baseItems * Math.sqrt(days / baseDays));
+}
+
 // GET daily summaries for a user
 async function getDailySummaries(req, res, next) {
     try {
         const { dateFrom, dateTo } = req.query;
         const userId = getUserId(req);
+        if (!dateFrom || !dateTo) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "dateFrom and dateTo query parameters are required",
+            );
+        }
+        if (new Date(dateFrom) > new Date(dateTo)) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "dateFrom cannot be later than dateTo",
+            );
+        }
+        const timeDifference = new Date(dateTo) - new Date(dateFrom);
+        const rangeDays = Math.ceil(timeDifference / (24 * 60 * 60 * 1000));
+        if (timeDifference >= 180 * 24 * 60 * 60 * 1000) {
+            const MAX_RANGE_DAYS = 180;
+            const MIN_SAMPLES = 45;
+            const MAX_SAMPLES = 80;
+            const GAPS = calculateItemsByDays(rangeDays);
+            /* const query = `
+                SELECT *
+                FROM (
+                    SELECT r.*,
+                           ROW_NUMBER() OVER (ORDER BY date DESC) AS rn
+                    FROM daily_summaries r
+                    WHERE userId = :userId
+                      AND date >= :dateFrom
+                      AND date <= :dateTo
+                ) AS subquery
+                WHERE (rn - 1) % :gaps = 0
+                ORDER BY date DESC;
+            `; */
+            const query = `WITH ordered AS (
+    SELECT
+        r.*,
+        ROW_NUMBER() OVER (ORDER BY r.date) AS rn,
+        COUNT(*) OVER () AS total_rows
+    FROM daily_summaries r
+    WHERE userId = '7d835ab7-835d-4a38-b133-6392a0445fb8'
+),
+params AS (
+    SELECT
+        total_rows,
+        GREATEST(
+            45,
+            FLOOR(45 * SQRT(:days_range / 180))
+        ) AS target_items
+    FROM ordered
+    LIMIT 1
+)
+SELECT o.*
+FROM ordered o
+JOIN params p
+WHERE MOD(o.rn - 1, CEILING(p.total_rows / p.target_items)) = 0
+ORDER BY o.date DESC;
+`;
+
+            const desiredSamples = Math.min(
+                MAX_SAMPLES,
+                Math.max(
+                    MIN_SAMPLES,
+                    Math.round((rangeDays / MAX_RANGE_DAYS) * MIN_SAMPLES),
+                ),
+            );
+
+            const allItems = await dailySummariesModel.sequelize.query(query, {
+                replacements: {
+                    userId,
+                    dateFrom: toDateOnly(normalizeDate(dateFrom)),
+                    dateTo: toDateOnly(normalizeDate(dateTo)),
+                    days_range: rangeDays,
+                    gaps: GAPS,
+                },
+                // logging: (msg) => logger.debug(msg),
+                type: dailySummariesModel.sequelize.QueryTypes.SELECT,
+            });
+
+            return res.status(httpStatus.OK).json({
+                ok: true,
+                length: allItems.length,
+                daysRange: rangeDays,
+                desiredSamples,
+                gaps: GAPS,
+                items: allItems,
+            });
+        }
         const items = await dailySummariesModel.findAll({
             where: {
                 userId,
@@ -326,7 +423,7 @@ async function getDailySummaries(req, res, next) {
             order: [["date", "DESC"]],
         });
         logger.info(
-            `Fetched ${items.length} daily summaries for user ${userId}`
+            `Fetched ${items.length} daily summaries for user ${userId}`,
         );
         return res.status(httpStatus.OK).json({ ok: true, items });
     } catch (err) {
@@ -343,7 +440,7 @@ async function saveActivitySummaries(req, res, next) {
         if (!expDate || !Array.isArray(summaries)) {
             throw new ApiError(
                 httpStatus.BAD_REQUEST,
-                "Invalid payload: exportDate and summaries array required"
+                "Invalid payload: exportDate and summaries array required",
             );
         }
         let upserts = 0;
@@ -408,6 +505,72 @@ async function getActivitySummaries(req, res, next) {
             if (to) whereDaily.dateComponents[Op.lte] = to;
         }
 
+        if (new Date(dateFrom) > new Date(dateTo)) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                "dateFrom cannot be later than dateTo",
+            );
+        }
+        const timeDifference = new Date(dateTo) - new Date(dateFrom);
+        const rangeDays = Math.ceil(timeDifference / (24 * 60 * 60 * 1000));
+        if (timeDifference >= 180 * 24 * 60 * 60 * 1000) {
+            const MAX_RANGE_DAYS = 180;
+            const MIN_SAMPLES = 45;
+            const MAX_SAMPLES = 80;
+            const GAPS = calculateItemsByDays(rangeDays);
+            const desiredSamples = Math.min(
+                MAX_SAMPLES,
+                Math.max(
+                    MIN_SAMPLES,
+                    Math.round((rangeDays / MAX_RANGE_DAYS) * MIN_SAMPLES),
+                ),
+            );
+            const query = `WITH ordered AS (
+    SELECT
+        r.*,
+        ROW_NUMBER() OVER (ORDER BY r.dateComponents) AS rn,
+        COUNT(*) OVER () AS total_rows
+    FROM activity_summaries r
+    WHERE userId = :userId
+      AND dateComponents >= :dateFrom
+      AND dateComponents <= :dateTo
+),params AS (
+    SELECT
+        total_rows,
+        GREATEST(
+            45,
+            FLOOR(45 * SQRT(:days_range / 180))
+        ) AS target_items
+    FROM ordered
+    LIMIT 1
+)
+SELECT o.*
+FROM ordered o
+JOIN params p
+WHERE MOD(o.rn - 1, CEILING(p.total_rows / p.target_items)) = 0
+ORDER BY o.dateComponents DESC;
+`;
+            const allItems = await dailySummariesModel.sequelize.query(query, {
+                replacements: {
+                    userId,
+                    dateFrom: toDateOnly(normalizeDate(dateFrom)),
+                    dateTo: toDateOnly(normalizeDate(dateTo)),
+                    days_range: rangeDays,
+                    gaps: GAPS,
+                },
+                // logging: (msg) => logger.debug(msg),
+                type: dailySummariesModel.sequelize.QueryTypes.SELECT,
+            });
+            return res.status(httpStatus.OK).json({
+                ok: true,
+                length: allItems.length,
+                daysRange: rangeDays,
+                desiredSamples,
+                gaps: GAPS,
+                items: allItems,
+            });
+        }
+
         const items = await activitySummariesModel.findAll({
             where: whereDaily,
             order: [["exportDate", "DESC"]],
@@ -453,8 +616,8 @@ async function getStatsSummaries(req, res, next) {
                 sequelize.where(
                     sequelize.col("activeEnergyBurned"),
                     ">=",
-                    sequelize.col("activeEnergyBurnedGoal")
-                )
+                    sequelize.col("activeEnergyBurnedGoal"),
+                ),
             ),
         });
 
@@ -472,7 +635,7 @@ async function getStatsSummaries(req, res, next) {
             activityScores.length > 0
                 ? Math.round(
                       activityScores.reduce((sum, v) => sum + v, 0) /
-                          activityScores.length
+                          activityScores.length,
                   )
                 : null;
 
@@ -565,13 +728,13 @@ async function importHealthData(req, res, next) {
         const workerToken = generateToken(
             userId,
             accessWorkerExpires,
-            tokenTypes.ACCESS
+            tokenTypes.ACCESS,
         );
         const exportXmlFilePath = resolve(
             config.persistent_Storage_Dir,
             "health_imports",
             userId.toString(),
-            "export.xml"
+            "export.xml",
         );
         const jobData = {
             xml_path: exportXmlFilePath,
