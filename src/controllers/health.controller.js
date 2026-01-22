@@ -318,7 +318,7 @@ function calculateItemsByDays(days) {
     const baseDays = 180;
     const baseItems = 45;
 
-    return Math.floor(baseItems * Math.sqrt(days / baseDays));
+    return Math.floor(baseItems * Math.pow(days / baseDays, 0.05));
 }
 
 // GET daily summaries for a user
@@ -371,7 +371,7 @@ params AS (
         total_rows,
         GREATEST(
             45,
-            FLOOR(45 * SQRT(:days_range / 180))
+            FLOOR(45 * POWER(:days_range / 180, 0.25))
         ) AS target_items
     FROM ordered
     LIMIT 1
@@ -539,7 +539,7 @@ async function getActivitySummaries(req, res, next) {
         total_rows,
         GREATEST(
             45,
-            FLOOR(45 * SQRT(:days_range / 180))
+            FLOOR(45 * POWER(:days_range / 180, 0.25))
         ) AS target_items
     FROM ordered
     LIMIT 1
