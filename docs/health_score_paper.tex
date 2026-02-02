@@ -1,0 +1,91 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\setlist{noitemsep}
+
+\title{A Composite Health Engagement Score from Consumer Wearable Telemetry}
+\author{Apple Health Analytics Team}
+\date{February 2, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a composite Health Engagement Score that summarizes longitudinal physical-activity adherence using consumer wearable telemetry. The metric aggregates: (1) daily activity-intensity goal attainment, (2) ambulatory volume consistency, and (3) streak persistence. Activity intensity is quantified as a weighted ratio of observed to prescribed targets for active energy, move time, exercise minutes, and stand hours. Ambulatory volume is captured by the proportion of days exceeding a step threshold, and streak persistence scales the length of the most recent consecutive high-step days. The composite score is a weighted average of these components and is mapped to a letter-grade rubric for interpretability. Supporting indicators include cumulative distance, count of goal-achievement days, and total tracked days. This formulation yields a transparent, decomposable summary suitable for cohort analytics, adherence monitoring, and downstream modeling of engagement-risk stratification.
+\end{abstract}
+
+\section{Introduction}
+Consumer wearables produce dense longitudinal data streams that can approximate daily physical-activity behaviors. Translating these signals into a concise, interpretable engagement metric can aid population monitoring, user feedback, and risk stratification. We define and operationalize a composite Health Engagement Score using readily available Apple Health exports, focusing on energy expenditure, movement, exercise duration, standing behavior, and step counts.
+
+\section{Data Sources and Preprocessing}
+\begin{itemize}
+    \item \textbf{Inputs:} Apple Health daily summaries (steps, distance, flights, basal and active energy) and activity summaries (active energy, move time, exercise time, stand hours, and their respective goals).
+    \item \textbf{Temporal normalization:} Dates are normalized to calendar days (UTC ISO 8601). Invalid or missing dates are discarded. Numerical fields are coerced to finite numbers; missing values remain null.
+    \item \textbf{Uniqueness:} Daily summaries are unique on $(\text{userId}, \text{date})$; activity summaries are unique on $(\text{userId}, \text{dateComponents})$.
+    \item \textbf{Sampling for long ranges:} For ranges exceeding 180 days, uniform thinning via windowed row-number sampling maintains at least 45 and at most 80 points to bound payload size while preserving temporal coverage.
+\end{itemize}
+
+\section{Component Scores}
+Let $d$ index days with valid observations. All component scores are scaled to $[0,100]$ unless stated otherwise.
+
+\subsection{Activity-Intensity Score $s_a$}
+For day $d$, define ratio $r_k(d) = \min\left(1, \frac{v_k(d)}{g_k(d)}\right)$ when goal $g_k(d)$ and value $v_k(d)$ are finite and $g_k(d) > 0$; otherwise $r_k(d)$ is null. Components $k$ include: active energy, move time, exercise minutes, and stand hours. With weights $w = \{0.4, 0.2, 0.2, 0.2\}$, the daily activity score is
+\begin{equation}
+    s_a(d) = 100 \cdot \frac{\sum_k w_k r_k(d)}{\sum_{k \in K_d} w_k},\quad K_d = \{k : r_k(d) \text{ is finite}\}.
+\end{equation}
+The aggregate activity score is the mean over days with finite $s_a(d)$.
+
+\subsection{Steps Score $s_s$}
+Let $D$ be the set of tracked days and $D_{10k} \subseteq D$ the days with steps $\ge 10{,}000$. The steps score is
+\begin{equation}
+    s_s = 100 \cdot \frac{|D_{10k}|}{|D|}.
+\end{equation}
+
+\subsection{Streak Score $s_p$}
+Let $L$ be the length (in days) of the most recent consecutive streak where steps $\ge 10{,}000$. The streak score is
+\begin{equation}
+    s_p = 100 \cdot \min\left(1, \frac{L}{30}\right).
+\end{equation}
+
+\section{Composite Score and Grade}
+Weights reflect relative emphasis on intensity, consistency, and persistence: $\alpha = 0.6$, $\beta = 0.25$, $\gamma = 0.15$. The composite Health Engagement Score is
+\begin{equation}
+    H = \frac{\alpha s_a + \beta s_s + \gamma s_p}{\alpha + \beta + \gamma}.
+\end{equation}
+A letter-grade rubric supports interpretability: A+ ($\ge 97$), A ($\ge 93$), A$-$ ($\ge 90$), B+ ($\ge 87$), B ($\ge 83$), B$-$ ($\ge 80$), C+ ($\ge 77$), C ($\ge 73$), C$-$ ($\ge 70$), D+ ($\ge 67$), D ($\ge 63$), D$-$ ($\ge 60$), otherwise F.
+
+\section{Supporting Indicators}
+\begin{itemize}
+    \item Cumulative distance over the range.
+    \item Goal-achievement count: days where active energy meets or exceeds its goal.
+    \item Days tracked: number of days with any daily summary.
+    \item Component breakdown: $s_a$, $s_s$, $s_p$ for debugging and user feedback.
+\end{itemize}
+
+\section{Implementation Notes}
+The metric is implemented server-side in Node.js with Sequelize models for daily and activity summaries. Date normalization uses ISO strings; numerical coercion guards against non-finite inputs. For extended ranges, windowed sampling reduces payload while preserving coverage. Scores are computed per user query bounds and returned with the composite grade.
+
+\section{Evaluation Plan}
+\begin{itemize}
+    \item \textbf{Construct validity:} Correlate $H$ and components with independent activity logs or VO2max estimates where available.
+    \item \textbf{Temporal stability:} Assess week-to-week variance under stable behavior to quantify metric noise.
+    \item \textbf{Sensitivity:} Detect expected jumps following known behavior changes (e.g., increase in daily steps by 2{,}000).
+    \item \textbf{User interpretability:} Qualitative feedback on grade thresholds and component breakdowns.
+\end{itemize}
+
+\section{Limitations and Ethics}
+\begin{itemize}
+    \item Dependent on device wear-time and data completeness; missingness can bias scores.
+    \item Step thresholds (10{,}000) and weights are heuristic; may require personalization.
+    \item Grades can influence behavior; present with supportive context to avoid discouragement.
+    \item Data privacy: all processing should comply with applicable data protection regulations and minimize data retention.
+\end{itemize}
+
+\section{Conclusion}
+The Health Engagement Score provides a concise, decomposable summary of daily activity adherence from wearable telemetry. Its components align with common movement goals, enable user-friendly grading, and support downstream analytics for engagement monitoring and risk stratification.
+
+\end{document}
