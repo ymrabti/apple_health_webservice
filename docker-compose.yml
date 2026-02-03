@@ -108,7 +108,7 @@ services:
 
     cloudflared:
         image: cloudflare/cloudflared:2025.6.1
-        command: tunnel --no-autoupdate run --token eyJhIjoiODUwYmVhYzdiNWQ4YzQwYTYxYzkxYTc5NWJkMzVkMmEiLCJ0IjoiNzliM2NiOGEtMzg2Yy00ZWM0LTg0YmEtMDgxNWVlOTNjMGNlIiwicyI6IlptWmtaREJtWkdFdE1qazRPQzAwTVRBMUxXSm1OVGN0TVdNM1pEazBPVGN4T1RkbCJ9
+        command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
         restart: unless-stopped
         depends_on:
             - health_mysql
