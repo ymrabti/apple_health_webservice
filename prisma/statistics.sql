@@ -13,7 +13,8 @@ SELECT
 FROM activity_summaries
 WHERE activeEnergyBurned >= 500
 GROUP BY userId, yearWeek
-HAVING COUNT(*) >= 7;
+HAVING COUNT(*) >= 7 AND AVG(activeEnergyBurned) >= 500
+ORDER BY userId, yearWeek;
 
 -- Gathering dispersed 7-day achievements the target enery burned up to 500 kcal
 -- Final query to find all 7-day streaks
@@ -58,7 +59,14 @@ WITH stats AS (
         END AS z_score,
         CASE
             WHEN s.stddev = 0 THEN 0
-            ELSE 0.5 * (1 + ERF((asu.activeEnergyBurned - s.mean) / (s.stddev * SQRT(2))))
+            ELSE 0.5 * (1 + (
+                SIGN((asu.activeEnergyBurned - s.mean) / (s.stddev * SQRT(2)))
+                * SQRT(1 - EXP(
+                    -1 * POWER((asu.activeEnergyBurned - s.mean) / (s.stddev * SQRT(2)), 2)
+                    * (4 / PI() + 0.147 * POWER((asu.activeEnergyBurned - s.mean) / (s.stddev * SQRT(2)), 2))
+                    / (1 + 0.147 * POWER((asu.activeEnergyBurned - s.mean) / (s.stddev * SQRT(2)), 2))
+                ))
+            ))
         END AS percentile_rank
     FROM activity_summaries asu
     CROSS JOIN stats s
