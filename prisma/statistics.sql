@@ -5,29 +5,15 @@ SELECT
     MIN(dateComponents) as firstDay,
     MAX(dateComponents) as lastDay,
     YEARWEEK(dateComponents, 1) AS yearWeek,
+    SUM(activeEnergyBurned) AS totalCalories,
+    AVG(activeEnergyBurned) AS avgCalories,
+    MIN(activeEnergyBurned) AS minCalories,
+    MAX(activeEnergyBurned) AS maxCalories,
     COUNT(*) AS activeDays
 FROM activity_summaries
 WHERE activeEnergyBurned >= 500
 GROUP BY userId, yearWeek
 HAVING COUNT(*) >= 7;
-
--- Streaks of 7 consecutive days with activeEnergyBurned >= 500
--- Intermediate query to find 7-day streaks
-SELECT
-    a.userId,
-    a.dateComponents AS firstDate,
-    DATE_ADD(a.dateComponents, INTERVAL 6 DAY) AS lastDate,
-    SUM(b.activeEnergyBurned) AS totalCalories,
-    COUNT(*) AS daysCount
-FROM activity_summaries a
-JOIN activity_summaries b
-  ON a.userId = b.userId
- AND b.dateComponents BETWEEN a.dateComponents
-                           AND DATE_ADD(a.dateComponents, INTERVAL 6 DAY)
- AND b.activeEnergyBurned >= 500
-WHERE a.activeEnergyBurned >= 500
-GROUP BY a.userId, a.dateComponents
-HAVING COUNT(*) = 7;
 
 -- Gathering dispersed 7-day achievements the target enery burned up to 500 kcal
 -- Final query to find all 7-day streaks
@@ -47,9 +33,35 @@ FROM (
         @prevUser := userId
     FROM activity_summaries
     CROSS JOIN (SELECT @rn := 0, @prevUser := NULL) vars
-    WHERE activeEnergyBurned >= 500 AND userId='0052fd53-6489-44e1-883b-0d467a589ebc'
+    WHERE activeEnergyBurned >= 500 -- AND userId='0052fd53-6489-44e1-883b-0d467a589ebc'
     ORDER BY userId, dateComponents
 ) t
 GROUP BY userId, FLOOR((rn-1)/7)
 HAVING COUNT(*) = 7
 ORDER BY diffDays DESC;
+
+-- Normal Distribution Calculation Example
+WITH stats AS (
+    SELECT
+        AVG(activeEnergyBurned) AS mean,
+        STDDEV_POP(activeEnergyBurned) AS stddev
+    FROM activity_summaries
+), calculations AS (
+    SELECT
+        asu.userId,
+        asu.activeEnergyBurned,
+        s.mean,
+        s.stddev,
+        CASE
+            WHEN s.stddev = 0 THEN 0
+            ELSE (asu.activeEnergyBurned - s.mean) / s.stddev
+        END AS z_score,
+        CASE
+            WHEN s.stddev = 0 THEN 0
+            ELSE 0.5 * (1 + ERF((asu.activeEnergyBurned - s.mean) / (s.stddev * SQRT(2))))
+        END AS percentile_rank
+    FROM activity_summaries asu
+    CROSS JOIN stats s
+)
+SELECT * FROM calculations
+ORDER BY userId, activeEnergyBurned;
