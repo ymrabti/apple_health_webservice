@@ -1,0 +1,7 @@
+# Mount the specific theme folder from the host to the container's themes directory
+FROM phpmyadmin/phpmyadmin:5.2
+COPY ./phpmyadmin/themes /var/www/html/themes
+# Set the default theme to 'metro'
+ENV PMA_DEFAULT_THEME=blueberry
+# Expose port 80
+EXPOSE 80

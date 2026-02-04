@@ -2,6 +2,7 @@
 node_modules
 aws
 data
+phpmyadmin
 # yarn error logs
 yarn-error.log
 *.aux

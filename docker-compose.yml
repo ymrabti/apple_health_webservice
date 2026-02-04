@@ -23,7 +23,10 @@ services:
         restart: unless-stopped
 
     health_phpmyadmin:
-        image: phpmyadmin/phpmyadmin:5.2
+        build:
+            context: .
+            dockerfile: Dockerfile.phpmyadmin
+        # image: phpmyadmin/phpmyadmin:5.2
         container_name: health_phpmyadmin
         restart: 'unless-stopped'
         ports:
