@@ -41,11 +41,50 @@ GROUP BY userId, FLOOR((rn-1)/7)
 HAVING COUNT(*) = 7
 ORDER BY diffDays DESC;
 
+SELECT 
+    CASE DAYOFWEEK(dateComponents)
+        WHEN 1 THEN 'Sunday'
+        WHEN 2 THEN 'Monday'
+        WHEN 3 THEN 'Tuesday'
+        WHEN 4 THEN 'Wednesday'
+        WHEN 5 THEN 'Thursday'
+        WHEN 6 THEN 'Friday'
+        WHEN 7 THEN 'Saturday'
+    END AS day_of_week,
+    ROUND(AVG(activeEnergyBurned)) AS avg_active_energy,
+    ROUND(STDDEV_POP(activeEnergyBurned)) AS stddev_active_energy,
+    ROUND(COUNT(activeEnergyBurned)) AS count_active_energy,
+    ROUND(MIN(activeEnergyBurned)) AS min_active_energy,
+    ROUND(MAX(activeEnergyBurned)) AS max_active_energy,
+    ROUND(SUM(activeEnergyBurned)) AS total_active_energy
+FROM `activity_summaries`
+WHERE dateComponents BETWEEN '2025-02-06' AND '2025-11-05'
+GROUP BY DAYOFWEEK(dateComponents)
+ORDER BY DAYOFWEEK(dateComponents);
+
+SELECT
+	userId,
+    ROUND(AVG(activeEnergyBurned)) AS avg_active_energy,
+    ROUND(STDDEV_POP(activeEnergyBurned)) AS stddev_active_energy,
+    ROUND(COUNT(activeEnergyBurned)) AS count_active_energy,
+    ROUND(MIN(activeEnergyBurned)) AS min_active_energy,
+    ROUND(MAX(activeEnergyBurned)) AS max_active_energy,
+    ROUND(SUM(activeEnergyBurned)) AS total_active_energy
+FROM `activity_summaries`
+WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
+GROUP BY userId;
+
+
+SELECT ROUND(AVG(activeEnergyBurned)) AS avg_active_energy FROM `activity_summaries`
+WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-04'
+UNION SELECT ROUND(AVG(activeEnergyBurned)) AS avg_active_energy FROM `activity_summaries`
+WHERE dateComponents >= '2025-11-05';
+
 -- Normal Distribution Calculation Example
 WITH stats AS (
     SELECT
-        AVG(activeEnergyBurned) AS mean,
-        STDDEV_POP(activeEnergyBurned) AS stddev
+        ROUND(AVG(activeEnergyBurned)) AS mean,
+        ROUND(STDDEV_POP(activeEnergyBurned)) AS stddev
     FROM activity_summaries
 ), calculations AS (
     SELECT

@@ -1,20 +1,20 @@
 language: node_js
 node_js:
-  - '12'
+    - "12"
 services:
-  - mongodb
+    - mongodb
 cache: yarn
 branches:
-  only:
-    - master
+    only:
+        - master
 env:
-  global:
-    - PORT=3000
-    - MONGODB_URL=mongodb://localhost:27017/node-boilerplate
-    - JWT_SECRET=thisisasamplesecret
-    - JWT_ACCESS_EXPIRATION_MINUTES=30
-    - JWT_REFRESH_EXPIRATION_DAYS=30
+    global:
+        - PORT=3000
+        - MONGODB_URL=mongodb://localhost:27017/node-boilerplate
+        - JWT_SECRET=thisisasamplesecret
+        - JWT_ACCESS_EXPIRATION_MINUTES=30
+        - JWT_REFRESH_EXPIRATION_DAYS=30
 script:
-  - yarn lint
-  - yarn test
+    - yarn lint
+    - yarn test
 after_success: yarn coverage:coveralls

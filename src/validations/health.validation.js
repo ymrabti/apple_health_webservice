@@ -37,6 +37,12 @@ const saveDailySummaries = {
     }),
 };
 
+const getTrends = {
+    query: Joi.object().keys({
+        dateTo: Joi.date().iso().required(),
+    }),
+};
+
 const saveActivitySummaries = {
     body: Joi.object().keys({
         userId: Joi.string(),
@@ -80,4 +86,5 @@ module.exports = {
     saveActivitySummaries,
     getDailySummaries,
     getActivitySummaries,
+    getTrends,
 };

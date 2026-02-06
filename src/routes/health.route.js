@@ -20,11 +20,11 @@ router
     .route("/daily-summaries")
     .get(
         validate(healthValidation.getDailySummaries),
-        controller.getDailySummaries
+        controller.getDailySummaries,
     )
     .post(
         validate(healthValidation.saveDailySummaries),
-        controller.saveDailySummaries
+        controller.saveDailySummaries,
     );
 
 // POST /api/apple-health/activity-summaries
@@ -32,11 +32,11 @@ router
     .route("/activity-summaries")
     .get(
         validate(healthValidation.getActivitySummaries),
-        controller.getActivitySummaries
+        controller.getActivitySummaries,
     )
     .post(
         validate(healthValidation.saveActivitySummaries),
-        controller.saveActivitySummaries
+        controller.saveActivitySummaries,
     );
 
 // POST /api/apple-health/stats-summaries
@@ -44,8 +44,14 @@ router
     .route("/stats-summaries")
     .get(
         validate(healthValidation.getActivitySummaries),
-        controller.getStatsSummaries
+        controller.getStatsSummaries,
     );
+
+router.get(
+    "/trends",
+    validate(healthValidation.getTrends),
+    controller.healthTrends,
+);
 
 // Configure multer for file uploads
 const upload = multer({

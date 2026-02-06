@@ -38,7 +38,9 @@ function normalizeDate(d) {
     if (!d) return null;
     const dt = new Date(d);
     if (isNaN(dt.getTime())) return null;
-    return dt.toISOString().slice(0, 10);
+    return new Date(dt.getTime() - new Date().getTimezoneOffset() * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
 }
 
 function isFiniteNumber(n) {
@@ -628,6 +630,11 @@ async function getStatsSummaries(req, res, next) {
         const allActivities = await activitySummariesModel.findAll({
             where: whereActivity,
         });
+        const averageActivity = await activitySummariesModel.aggregate(
+            "activeEnergyBurned",
+            "avg",
+            { where: whereActivity },
+        );
         const activityScores = allActivities
             .map((row) => computeHealthScore(row.get({ plain: true })))
             .filter((v) => v != null && isFiniteNumber(v));
@@ -772,6 +779,117 @@ async function importHealthData(req, res, next) {
     }
 }
 
+async function healthTrends(req, res, next) {
+    try {
+        const userId = getUserId(req);
+        let { dateTo } = req.query;
+        if (!dateTo) {
+            dateTo = new Date(
+                new Date().setHours(0, 0, 0, 0) - /* 24H */ 24 * 60 * 60 * 1000,
+            ).toISOString(); // yesterday
+        }
+        const to = toDateOnly(normalizeDate(dateTo));
+        const tomorrowLastYear = normalizeDate(
+            new Date(
+                to.getFullYear() - 1,
+                to.getMonth(),
+                to.getDate(),
+                0,
+                0,
+                0,
+                0,
+            ).toISOString(),
+        );
+        const before3months = normalizeDate(
+            new Date(
+                to.getFullYear(),
+                to.getMonth() - 3,
+                to.getDate(),
+                0,
+                0,
+                0,
+                0,
+            ).toISOString(),
+        );
+
+        const whereActivity = {
+            userId,
+            dateComponents: {
+                [Op.gte]: tomorrowLastYear,
+                [Op.lte]: before3months,
+            },
+        };
+        const avgLast365Days = await activitySummariesModel.aggregate(
+            "activeEnergyBurned",
+            "avg",
+            { where: whereActivity },
+        );
+        const whereActivity90 = {
+            userId,
+            dateComponents: {
+                [Op.gte]: before3months,
+                [Op.lte]: to,
+            },
+        };
+        const avgLast90Days = await activitySummariesModel.aggregate(
+            "activeEnergyBurned",
+            "avg",
+            { where: whereActivity90 },
+        );
+        const query = `SELECT 
+    CASE DAYOFWEEK(dateComponents)
+        WHEN 1 THEN 'Sunday'
+        WHEN 2 THEN 'Monday'
+        WHEN 3 THEN 'Tuesday'
+        WHEN 4 THEN 'Wednesday'
+        WHEN 5 THEN 'Thursday'
+        WHEN 6 THEN 'Friday'
+        WHEN 7 THEN 'Saturday'
+    END AS day_of_week,
+    ROUND(AVG(activeEnergyBurned)) AS avg_active_energy,
+    ROUND(STDDEV_POP(activeEnergyBurned)) AS stddev_active_energy,
+    ROUND(COUNT(activeEnergyBurned)) AS count_active_energy,
+    ROUND(MIN(activeEnergyBurned)) AS min_active_energy,
+    ROUND(MAX(activeEnergyBurned)) AS max_active_energy,
+    ROUND(SUM(activeEnergyBurned)) AS total_active_energy
+FROM \`activity_summaries\`
+WHERE dateComponents BETWEEN :startDate AND :endDate
+    AND userId = :userId
+GROUP BY DAYOFWEEK(dateComponents)
+ORDER BY (DAYOFWEEK(dateComponents)+5)%7;`;
+        const weekdayAvgsLast90Days =
+            await activitySummariesModel.sequelize.query(query, {
+                replacements: {
+                    userId,
+                    startDate: before3months,
+                    endDate: normalizeDate(to),
+                },
+                type: activitySummariesModel.sequelize.QueryTypes.SELECT,
+                // logging: (msg) => logger.debug(msg),
+            });
+        const weekdayAvgsLast365Days =
+            await activitySummariesModel.sequelize.query(query, {
+                replacements: {
+                    userId,
+                    startDate: tomorrowLastYear,
+                    endDate: before3months,
+                },
+                type: activitySummariesModel.sequelize.QueryTypes.SELECT,
+                // logging: (msg) => logger.debug(msg),
+            });
+        return res.status(httpStatus.OK).json({
+            avgLast365Days: Math.round(avgLast365Days),
+            avgLast90Days: Math.round(avgLast90Days),
+            weekdayAvgsLast90Days: weekdayAvgsLast90Days,
+            weekdayAvgsLast365Days: weekdayAvgsLast365Days,
+            LastYear: tomorrowLastYear,
+            Last3months: before3months,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
 module.exports = {
     getUserInfos: catchAsync(getUserInfos),
     saveUserInfos: catchAsync(saveUserInfos),
@@ -781,4 +899,5 @@ module.exports = {
     saveDailySummaries: catchAsync(saveDailySummaries),
     getActivitySummaries: catchAsync(getActivitySummaries),
     saveActivitySummaries: catchAsync(saveActivitySummaries),
+    healthTrends: catchAsync(healthTrends),
 };
