@@ -43,6 +43,13 @@ const getTrends = {
     }),
 };
 
+const weeklyStatistics = {
+    query: Joi.object().keys({
+        dateFrom: Joi.date().iso().required(),
+        dateTo: Joi.date().iso().required(),
+    }),
+};
+
 const saveActivitySummaries = {
     body: Joi.object().keys({
         userId: Joi.string(),
@@ -87,4 +94,5 @@ module.exports = {
     getDailySummaries,
     getActivitySummaries,
     getTrends,
+    weeklyStatistics,
 };

@@ -1,6 +1,6 @@
 -- Find users who have at least 7 days in a week with activeEnergyBurned >= 500, year-week basis
 -- Initial query to identify candidate weeks
-SELECT
+/* SELECT
     userId,
     MIN(dateComponents) as firstDay,
     MAX(dateComponents) as lastDay,
@@ -11,10 +11,10 @@ SELECT
     MAX(activeEnergyBurned) AS maxCalories,
     COUNT(*) AS activeDays
 FROM activity_summaries
-WHERE activeEnergyBurned >= 500
+-- WHERE activeEnergyBurned >= 500
 GROUP BY userId, yearWeek
-HAVING COUNT(*) >= 7 AND AVG(activeEnergyBurned) >= 500
-ORDER BY userId, yearWeek;
+HAVING COUNT(*) >= 7
+ORDER BY userId, yearWeek; */
 
 -- Gathering dispersed 7-day achievements the target enery burned up to 500 kcal
 -- Final query to find all 7-day streaks
@@ -41,7 +41,7 @@ GROUP BY userId, FLOOR((rn-1)/7)
 HAVING COUNT(*) = 7
 ORDER BY diffDays DESC;
 
-SELECT 
+/* SELECT 
     CASE DAYOFWEEK(dateComponents)
         WHEN 1 THEN 'Sunday'
         WHEN 2 THEN 'Monday'
@@ -60,7 +60,7 @@ SELECT
 FROM `activity_summaries`
 WHERE dateComponents BETWEEN '2025-02-06' AND '2025-11-05'
 GROUP BY DAYOFWEEK(dateComponents)
-ORDER BY DAYOFWEEK(dateComponents);
+ORDER BY DAYOFWEEK(dateComponents); */
 
 SELECT
 	userId,
@@ -75,17 +75,13 @@ WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
 GROUP BY userId;
 
 
-SELECT ROUND(AVG(activeEnergyBurned)) AS avg_active_energy FROM `activity_summaries`
-WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-04'
-UNION SELECT ROUND(AVG(activeEnergyBurned)) AS avg_active_energy FROM `activity_summaries`
-WHERE dateComponents >= '2025-11-05';
-
 -- Normal Distribution Calculation Example
 WITH stats AS (
     SELECT
         ROUND(AVG(activeEnergyBurned)) AS mean,
         ROUND(STDDEV_POP(activeEnergyBurned)) AS stddev
     FROM activity_summaries
+    WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
 ), calculations AS (
     SELECT
         asu.userId,

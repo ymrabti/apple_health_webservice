@@ -836,7 +836,8 @@ async function healthTrends(req, res, next) {
             "avg",
             { where: whereActivity90 },
         );
-        const query = `SELECT 
+        const query = `
+SELECT 
     CASE DAYOFWEEK(dateComponents)
         WHEN 1 THEN 'Sunday'
         WHEN 2 THEN 'Monday'
@@ -856,7 +857,8 @@ FROM \`activity_summaries\`
 WHERE dateComponents BETWEEN :startDate AND :endDate
     AND userId = :userId
 GROUP BY DAYOFWEEK(dateComponents)
-ORDER BY (DAYOFWEEK(dateComponents)+5)%7;`;
+ORDER BY (DAYOFWEEK(dateComponents)+5)%7;
+`;
         const weekdayAvgsLast90Days =
             await activitySummariesModel.sequelize.query(query, {
                 replacements: {
@@ -890,6 +892,160 @@ ORDER BY (DAYOFWEEK(dateComponents)+5)%7;`;
     }
 }
 
+async function weeklyStatistics(req, res, next) {
+    try {
+        const userId = getUserId(req);
+        const { dateFrom, dateTo } = req.query;
+        const from = toDateOnly(normalizeDate(dateFrom));
+        const to = toDateOnly(normalizeDate(dateTo));
+        const whereDaily = { userId };
+        if (from || to) {
+            whereDaily.date = {};
+            if (from) whereDaily.date[Op.gte] = from;
+            if (to) whereDaily.date[Op.lte] = to;
+        }
+        const weeklySummarySQL = `
+SELECT 
+    YEAR(date) AS year,
+    YEARWEEK(date, 1) AS week,
+    MIN(date) as firstDay,
+    MAX(date) as lastDay,
+    SUM(steps) AS total_steps,
+    AVG(steps) AS avg_steps,
+    MAX(steps) AS max_steps,
+    MIN(steps) AS min_steps,
+    STDDEV_POP(steps) AS stddev_steps,
+    SUM(distance) AS total_distance,
+    AVG(distance) AS avg_distance,
+    MAX(distance) AS max_distance,
+    MIN(distance) AS min_distance,
+    STDDEV_POP(distance) AS stddev_distance,
+    SUM(flights) AS total_flights,
+    AVG(flights) AS avg_flights,
+    MAX(flights) AS max_flights,
+    MIN(flights) AS min_flights,
+    STDDEV_POP(flights) AS stddev_flights,
+    SUM(active) AS total_active,
+    AVG(active) AS avg_active,
+    MAX(active) AS max_active,
+    MIN(active) AS min_active,
+    STDDEV_POP(active) AS stddev_active,
+    SUM(basal) AS total_basal,
+    AVG(basal) AS avg_basal,
+    MAX(basal) AS max_basal,
+    MIN(basal) AS min_basal,
+    STDDEV_POP(basal) AS stddev_basal,
+    SUM(exercise) AS total_exercise,
+    AVG(exercise) AS avg_exercise,
+    MAX(exercise) AS max_exercise,
+    MIN(exercise) AS min_exercise,
+    STDDEV_POP(exercise) AS stddev_exercise
+FROM daily_summaries
+WHERE userId = :userId
+    AND date BETWEEN :startDate AND :endDate
+GROUP BY week
+ORDER BY week;
+`;
+        const queryActivitySummary = `
+SELECT
+    MIN(dateComponents) as firstDay,
+    MAX(dateComponents) as lastDay,
+    YEARWEEK(dateComponents, 1) AS yearWeek,
+    SUM(activeEnergyBurned) AS totalCalories,
+    STDDEV_POP(activeEnergyBurned) AS stddevCalories,
+    AVG(activeEnergyBurned) AS avgCalories,
+    MIN(activeEnergyBurned) AS minCalories,
+    MAX(activeEnergyBurned) AS maxCalories,
+    COUNT(*) AS activeDays
+FROM activity_summaries
+WHERE userId = :userId
+    AND dateComponents BETWEEN :startDate AND :endDate
+GROUP BY yearWeek
+HAVING COUNT(*) >= 7
+ORDER BY yearWeek;`;
+        const weeklyStats = await dailySummariesModel.sequelize.query(
+            weeklySummarySQL,
+            {
+                logging: (msg) => logger.debug(msg),
+                replacements: {
+                    userId,
+                    startDate: from,
+                    endDate: to,
+                },
+                type: dailySummariesModel.sequelize.QueryTypes.SELECT,
+            },
+        );
+        const weeklyActivityStats =
+            await activitySummariesModel.sequelize.query(queryActivitySummary, {
+                logging: (msg) => logger.debug(msg),
+                replacements: {
+                    userId,
+                    startDate: from,
+                    endDate: to,
+                },
+                type: activitySummariesModel.sequelize.QueryTypes.SELECT,
+            });
+        const aggregatedHealthMetrics = weeklyStats.map((row) => ({
+            year: row.year,
+            week: row.week,
+            firstDay: row.firstDay,
+            lastDay: row.lastDay,
+            steps: {
+                total: Number(row.total_steps) || 0,
+                avg: Number(row.avg_steps) || 0,
+                max: Number(row.max_steps) || 0,
+                min: Number(row.min_steps) || 0,
+                stddev: Number(row.stddev_steps) || 0,
+            },
+            distance: {
+                total: Number(row.total_distance) || 0,
+                avg: Number(row.avg_distance) || 0,
+                max: Number(row.max_distance) || 0,
+                min: Number(row.min_distance) || 0,
+                stddev: Number(row.stddev_distance) || 0,
+            },
+            flights: {
+                total: Number(row.total_flights) || 0,
+                avg: Number(row.avg_flights) || 0,
+                max: Number(row.max_flights) || 0,
+                min: Number(row.min_flights) || 0,
+                stddev: Number(row.stddev_flights) || 0,
+            },
+            active: {
+                total: Number(row.total_active) || 0,
+                avg: Number(row.avg_active) || 0,
+                max: Number(row.max_active) || 0,
+                min: Number(row.min_active) || 0,
+                stddev: Number(row.stddev_active) || 0,
+            },
+            basal: {
+                total: Number(row.total_basal) || 0,
+                avg: Number(row.avg_basal) || 0,
+                max: Number(row.max_basal) || 0,
+                min: Number(row.min_basal) || 0,
+                stddev: Number(row.stddev_basal) || 0,
+            },
+            exercise: {
+                total: Number(row.total_exercise) || 0,
+                avg: Number(row.avg_exercise) || 0,
+                max: Number(row.max_exercise) || 0,
+                min: Number(row.min_exercise) || 0,
+                stddev: Number(row.stddev_exercise) || 0,
+            },
+        }));
+        return res
+            .status(httpStatus.OK)
+            .json({
+                aggregatedHealthMetrics,
+                weeklyActivityStats,
+                dateFrom: normalizeDate(dateFrom),
+                dateTo: normalizeDate(dateTo),
+            });
+    } catch (err) {
+        next(err);
+    }
+}
+
 module.exports = {
     getUserInfos: catchAsync(getUserInfos),
     saveUserInfos: catchAsync(saveUserInfos),
@@ -900,4 +1056,5 @@ module.exports = {
     getActivitySummaries: catchAsync(getActivitySummaries),
     saveActivitySummaries: catchAsync(saveActivitySummaries),
     healthTrends: catchAsync(healthTrends),
+    weeklyStatistics: catchAsync(weeklyStatistics),
 };

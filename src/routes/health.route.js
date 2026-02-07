@@ -53,6 +53,12 @@ router.get(
     controller.healthTrends,
 );
 
+router.get(
+    "/weekly-statistics",
+    validate(healthValidation.weeklyStatistics),
+    controller.weeklyStatistics,
+);
+
 // Configure multer for file uploads
 const upload = multer({
     dest: resolve(config.persistent_Storage_Dir, "uploads", "_temp_"),
