@@ -34,7 +34,7 @@ FROM (
         @prevUser := userId
     FROM activity_summaries
     CROSS JOIN (SELECT @rn := 0, @prevUser := NULL) vars
-    WHERE activeEnergyBurned >= 500 -- AND userId='0052fd53-6489-44e1-883b-0d467a589ebc'
+    WHERE activeEnergyBurned >= 500 AND dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
     ORDER BY userId, dateComponents
 ) t
 GROUP BY userId, FLOOR((rn-1)/7)
@@ -58,7 +58,7 @@ ORDER BY diffDays DESC;
     ROUND(MAX(activeEnergyBurned)) AS max_active_energy,
     ROUND(SUM(activeEnergyBurned)) AS total_active_energy
 FROM `activity_summaries`
-WHERE dateComponents BETWEEN '2025-02-06' AND '2025-11-05'
+WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
 GROUP BY DAYOFWEEK(dateComponents)
 ORDER BY DAYOFWEEK(dateComponents); */
 
@@ -74,6 +74,60 @@ FROM `activity_summaries`
 WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
 GROUP BY userId;
 
+-- Select days where activeEnergyBurned is above the average for each user
+SELECT
+    userId,
+    dateComponents,
+    activeEnergyBurned,
+    ROUND(AVG(activeEnergyBurned) OVER (PARTITION BY userId)) AS avg_active_energy
+FROM activity_summaries
+WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05' AND activeEnergyBurned > (
+    SELECT ROUND(AVG(activeEnergyBurned))
+    FROM activity_summaries AS inner_as
+    WHERE inner_as.userId = activity_summaries.userId
+    AND dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
+)
+ORDER BY userId, dateComponents;
+
+-- Grouping activeEnergyBurned into 100 kcal ranges and counting the number of days in each range
+SELECT
+    CONCAT(
+        FLOOR(activeEnergyBurned / 100) * 100, 
+        ' - ', 
+        FLOOR(activeEnergyBurned / 100) * 100 + 99
+    ) AS calorie_range,
+    COUNT(*) AS day_count
+FROM activity_summaries
+WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
+GROUP BY FLOOR(activeEnergyBurned / 100)
+ORDER BY FLOOR(activeEnergyBurned / 100);
+
+-- Calculating mean, standard deviation, and percentiles for activeEnergyBurned
+SELECT
+    ROUND(AVG(activeEnergyBurned)) AS mean,
+    ROUND(STDDEV_POP(activeEnergyBurned)) AS std_dev,
+    ROUND(AVG(activeEnergyBurned) - STDDEV_POP(activeEnergyBurned)) AS one_std_below,
+    ROUND(AVG(activeEnergyBurned) + STDDEV_POP(activeEnergyBurned)) AS one_std_above,
+    ROUND(AVG(activeEnergyBurned) - 2 * STDDEV_POP(activeEnergyBurned)) AS two_std_below,
+    ROUND(AVG(activeEnergyBurned) + 2 * STDDEV_POP(activeEnergyBurned)) AS two_std_above
+FROM activity_summaries
+WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05';
+
+-- Creating a histogram of activeEnergyBurned distribution with 50 kcal bins
+WITH bins AS (
+    SELECT
+        FLOOR(activeEnergyBurned / 50) * 50 AS bin_start,
+        COUNT(*) AS frequency
+    FROM activity_summaries
+    WHERE dateComponents BETWEEN '2025-06-23' AND '2025-11-05'
+    GROUP BY FLOOR(activeEnergyBurned / 50)
+)
+SELECT
+    CONCAT(bin_start, ' - ', bin_start + 49) AS calorie_range,
+    frequency,
+    REPEAT('█', ROUND(frequency / 2)) AS histogram
+FROM bins
+ORDER BY bin_start;
 
 -- Normal Distribution Calculation Example
 WITH stats AS (

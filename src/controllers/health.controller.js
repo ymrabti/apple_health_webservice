@@ -800,7 +800,7 @@ async function healthTrends(req, res, next) {
                 0,
             ).toISOString(),
         );
-        const before3months = normalizeDate(
+        const beforeQuarter = normalizeDate(
             new Date(
                 to.getFullYear(),
                 to.getMonth() - 3,
@@ -812,29 +812,31 @@ async function healthTrends(req, res, next) {
             ).toISOString(),
         );
 
-        const whereActivity = {
-            userId,
-            dateComponents: {
-                [Op.gte]: tomorrowLastYear,
-                [Op.lte]: before3months,
-            },
-        };
         const avgLast365Days = await activitySummariesModel.aggregate(
             "activeEnergyBurned",
             "avg",
-            { where: whereActivity },
-        );
-        const whereActivity90 = {
-            userId,
-            dateComponents: {
-                [Op.gte]: before3months,
-                [Op.lte]: to,
+            {
+                where: {
+                    userId,
+                    dateComponents: {
+                        [Op.gte]: normalizeDate(tomorrowLastYear),
+                        [Op.lte]: normalizeDate(to),
+                    },
+                },
             },
-        };
+        );
         const avgLast90Days = await activitySummariesModel.aggregate(
             "activeEnergyBurned",
             "avg",
-            { where: whereActivity90 },
+            {
+                where: {
+                    userId,
+                    dateComponents: {
+                        [Op.gte]: normalizeDate(beforeQuarter),
+                        [Op.lte]: normalizeDate(to),
+                    },
+                },
+            },
         );
         const query = `
 SELECT 
@@ -863,7 +865,7 @@ ORDER BY (DAYOFWEEK(dateComponents)+5)%7;
             await activitySummariesModel.sequelize.query(query, {
                 replacements: {
                     userId,
-                    startDate: before3months,
+                    startDate: normalizeDate(beforeQuarter),
                     endDate: normalizeDate(to),
                 },
                 type: activitySummariesModel.sequelize.QueryTypes.SELECT,
@@ -873,19 +875,72 @@ ORDER BY (DAYOFWEEK(dateComponents)+5)%7;
             await activitySummariesModel.sequelize.query(query, {
                 replacements: {
                     userId,
-                    startDate: tomorrowLastYear,
-                    endDate: before3months,
+                    startDate: normalizeDate(tomorrowLastYear),
+                    endDate: normalizeDate(to),
                 },
                 type: activitySummariesModel.sequelize.QueryTypes.SELECT,
                 // logging: (msg) => logger.debug(msg),
             });
+        const sequelize = activitySummariesModel.sequelize;
+        const ringClosedLastYear = await activitySummariesModel.count({
+            where: sequelize.and(
+                {
+                    userId,
+                    dateComponents: {
+                        [Op.gte]: normalizeDate(tomorrowLastYear),
+                        [Op.lte]: normalizeDate(to),
+                    },
+                },
+                sequelize.where(
+                    sequelize.col("activeEnergyBurned"),
+                    ">=",
+                    sequelize.col("activeEnergyBurnedGoal"),
+                ),
+            ),
+        });
+        const ringCountLastYear = await activitySummariesModel.count({
+            where: {
+                userId,
+                dateComponents: {
+                    [Op.gte]: normalizeDate(tomorrowLastYear),
+                    [Op.lte]: normalizeDate(to),
+                },
+            },
+        });
+        const ringClosedLastQuarter = await activitySummariesModel.count({
+            where: sequelize.and(
+                {
+                    userId,
+                    dateComponents: {
+                        [Op.gte]: normalizeDate(beforeQuarter),
+                        [Op.lte]: normalizeDate(to),
+                    },
+                },
+                sequelize.where(
+                    sequelize.col("activeEnergyBurned"),
+                    ">=",
+                    sequelize.col("activeEnergyBurnedGoal"),
+                ),
+            ),
+        });
+        const ringCountLastQuarter = await activitySummariesModel.count({
+            where: {
+                userId,
+                dateComponents: {
+                    [Op.gte]: normalizeDate(beforeQuarter),
+                    [Op.lte]: normalizeDate(to),
+                },
+            },
+        });
         return res.status(httpStatus.OK).json({
             avgLast365Days: Math.round(avgLast365Days),
             avgLast90Days: Math.round(avgLast90Days),
             weekdayAvgsLast90Days: weekdayAvgsLast90Days,
             weekdayAvgsLast365Days: weekdayAvgsLast365Days,
-            LastYear: tomorrowLastYear,
-            Last3months: before3months,
+            LastYear: normalizeDate(tomorrowLastYear),
+            LastQuarter: normalizeDate(beforeQuarter),
+            move_ringsClosedLastYear: `${ringClosedLastYear} / ${ringCountLastYear} (${ringCountLastYear > 0 ? Math.round((ringClosedLastYear / ringCountLastYear) * 100) : 0}%)`,
+            move_ringsClosedLastQuarter: `${ringClosedLastQuarter} / ${ringCountLastQuarter} (${ringCountLastQuarter > 0 ? Math.round((ringClosedLastQuarter / ringCountLastQuarter) * 100) : 0}%)`,
         });
     } catch (err) {
         next(err);
@@ -962,7 +1017,8 @@ WHERE userId = :userId
     AND dateComponents BETWEEN :startDate AND :endDate
 GROUP BY yearWeek
 HAVING COUNT(*) >= 7
-ORDER BY yearWeek;`;
+ORDER BY yearWeek;
+`;
         const weeklyStats = await dailySummariesModel.sequelize.query(
             weeklySummarySQL,
             {
@@ -1033,14 +1089,12 @@ ORDER BY yearWeek;`;
                 stddev: Number(row.stddev_exercise) || 0,
             },
         }));
-        return res
-            .status(httpStatus.OK)
-            .json({
-                aggregatedHealthMetrics,
-                weeklyActivityStats,
-                dateFrom: normalizeDate(dateFrom),
-                dateTo: normalizeDate(dateTo),
-            });
+        return res.status(httpStatus.OK).json({
+            aggregatedHealthMetrics,
+            weeklyActivityStats,
+            dateFrom: normalizeDate(dateFrom),
+            dateTo: normalizeDate(dateTo),
+        });
     } catch (err) {
         next(err);
     }

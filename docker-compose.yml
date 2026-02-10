@@ -5,7 +5,7 @@ services:
         image: mariadb:10.4.32
         container_name: health_mysql
         ports:
-            - "3301:3306"
+            - "3403:3306"
         volumes:
             - mysqldbdata:/var/lib/mysql
         environment:
@@ -30,7 +30,7 @@ services:
         container_name: health_phpmyadmin
         restart: 'unless-stopped'
         ports:
-            - "9080:80"
+            - "8003:80"
         environment:
             PMA_HOST: health_mysql
             PMA_USER: healthy_user
@@ -51,8 +51,9 @@ services:
         env_file:
             - ./.env
         ports:
-            - "8739:7384"
+            - "3003:3000"
         environment:
+            PORT: 3000
             NODE_ENV: production
             LOGS_DIR: /usr/src/logs
             PERSISTENT_STORAGE_DIR: /usr/src/health
@@ -82,7 +83,7 @@ services:
             dockerfile: Dockerfile
         container_name: health_python-worker
         environment:
-            - BACKEND_URL=http://health_node-app:7384
+            - BACKEND_URL=http://health_node-app:3000
             - WATCH_DIR=/usr/src/health/health_imports
             - PROCESSED_DIR=/usr/src/health/processed
         volumes:
@@ -100,9 +101,9 @@ services:
         image: health_image_angular-frontend:1.0.0
         container_name: health_angular-frontend
         ports:
-            - "3762:80"
+            - "4203:80"
         environment:
-            - API_URL=http://health_node-app:7384
+            - API_URL=http://health_node-app:3000
         depends_on:
             - health_node-app
         networks:
