@@ -1,9 +1,9 @@
 name: Apple-Health
 
 services:
-    health_mysql:
+    maria_db:
         image: mariadb:10.4.32
-        container_name: health_mysql
+        container_name: health_maria_db
         ports:
             - "3403:3306"
         volumes:
@@ -22,29 +22,29 @@ services:
             retries: 5
         restart: unless-stopped
 
-    health_phpmyadmin:
+    adminer:
         build:
             context: .
             dockerfile: Dockerfile.phpmyadmin
         # image: phpmyadmin/phpmyadmin:5.2
-        container_name: health_phpmyadmin
+        container_name: health_adminer
         restart: 'unless-stopped'
         ports:
             - "8003:80"
         environment:
-            PMA_HOST: health_mysql
+            PMA_HOST: maria_db
             PMA_USER: healthy_user
             PMA_PASSWORD: password
             UPLOAD_LIMIT: 300M
         depends_on:
-            health_mysql:
+            maria_db:
                 condition: service_healthy
         networks:
             - health-network
         volumes:
             - phpmyadmin-data:/var/www/html
 
-    health_node-app:
+    server:
         build:
             context: .
             dockerfile: Dockerfile.ready
@@ -58,8 +58,8 @@ services:
             LOGS_DIR: /usr/src/logs
             PERSISTENT_STORAGE_DIR: /usr/src/health
             GOOGLE_APP_CREDENTIALS: /usr/src/health/google-credentials.json
-            DATABASE_URL: mysql://healthy_user:password@health_mysql:3306/health_db
-            DB_HOST: health_mysql
+            DATABASE_URL: mysql://healthy_user:password@maria_db:3306/health_db
+            DB_HOST: maria_db
             DB_PORT: 3306
             DB_USER: healthy_user
             DB_PASSWORD: password
@@ -68,9 +68,9 @@ services:
             - persistent-storage:/usr/src/health
             - logs-data:/usr/src/logs
         image: health_image_webservice:1.0.0
-        container_name: health_webservice
+        container_name: health_server
         depends_on:
-            health_mysql:
+            maria_db:
                 condition: service_healthy
         networks:
             - health-network
@@ -83,29 +83,29 @@ services:
             dockerfile: Dockerfile
         container_name: health_python-worker
         environment:
-            - BACKEND_URL=http://health_node-app:3000
+            - BACKEND_URL=http://server:3000
             - WATCH_DIR=/usr/src/health/health_imports
             - PROCESSED_DIR=/usr/src/health/processed
         volumes:
             - persistent-storage:/usr/src/health
         depends_on:
-            - health_node-app
+            - server
         networks:
             - health-network
         restart: unless-stopped
 
-    health_angular-frontend:
+    client:
         build:
             context: ../apple_health_ng
             dockerfile: Dockerfile.ready
         image: health_image_angular-frontend:1.0.0
-        container_name: health_angular-frontend
+        container_name: health_client
         ports:
             - "4203:80"
         environment:
-            - API_URL=http://health_node-app:3000
+            - API_URL=http://server:3000
         depends_on:
-            - health_node-app
+            - server
         networks:
             - health-network
         restart: unless-stopped
@@ -115,10 +115,10 @@ services:
         command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
         restart: unless-stopped
         depends_on:
-            - health_mysql
-            - health_node-app
-            - health_phpmyadmin
-            - health_angular-frontend
+            - maria_db
+            - server
+            - adminer
+            - client
         networks:
             - health-network
         volumes:
