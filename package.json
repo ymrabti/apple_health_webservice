@@ -37,10 +37,10 @@
         "db:staging": "yarn prisma:reset:staging && yarn prisma:generate && yarn prisma:migrate:staging",
         "db:prod": "yarn prisma:generate && yarn prisma:migrate:prod",
         "docker:prod": "docker-compose -f docker-compose.yml up -d --build",
-        "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-        "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up",
+        "docker:local": "docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d --build",
+        "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d --build",
         "docker:down:prod": "docker-compose -f docker-compose.yml down -v",
-        "docker:down:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml down -v",
+        "docker:down:local": "docker-compose -f docker-compose.yml -f docker-compose.local.yml down -v",
         "docker:down:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml down -v",
         "re:docker": "concurrently \"yarn docker:down:prod\" \"yarn build\" \"yarn docker:prod\""
     },

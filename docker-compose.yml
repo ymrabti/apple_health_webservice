@@ -79,7 +79,7 @@ services:
     # Python Worker
     python-worker:
         build:
-            context: ../apple_health_export
+            context: ../worker
             dockerfile: Dockerfile
         container_name: health_python-worker
         environment:
@@ -96,7 +96,7 @@ services:
 
     client:
         build:
-            context: ../apple_health_ng
+            context: ../client
             dockerfile: Dockerfile.ready
         image: health_image_angular-frontend:1.0.0
         container_name: health_client

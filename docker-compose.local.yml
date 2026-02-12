@@ -1,0 +1,14 @@
+name: Apple-Health-Local
+
+services:
+    maria_db:
+        volumes:
+            - ../volumes/mysqldbdata:/var/lib/mysql
+
+    adminer:
+        volumes:
+            - ../volumes/phpmyadmin-data:/var/www/html
+    server:
+        volumes:
+            - ../volumes/persistent-storage:/usr/src/health
+            - ../volumes/logs-data:/usr/src/logs
