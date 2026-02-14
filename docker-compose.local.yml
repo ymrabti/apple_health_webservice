@@ -2,13 +2,33 @@ name: Apple-Health-Local
 
 services:
     maria_db:
+        container_name: health_maria_db_local
+        ports:
+            - "3303:3306"
         volumes:
             - ../volumes/mysqldbdata:/var/lib/mysql
 
     adminer:
+        container_name: health_adminer_local
+        ports:
+            - "7003:8080"
         volumes:
             - ../volumes/phpmyadmin-data:/var/www/html
     server:
+        container_name: health_server_local
+        ports:
+            - "2903:3000"
         volumes:
             - ../volumes/persistent-storage:/usr/src/health
             - ../volumes/logs-data:/usr/src/logs
+    client:
+        container_name: health_client_local
+        ports:
+            - "6203:80"
+
+    python-worker:
+        container_name: health_python-worker_local
+
+    cloudflared:
+        container_name: health_cloudflared_local
+        command: tunnel --no-autoupdate run --hostname local-health.youmt.dev --url http://server:3000
